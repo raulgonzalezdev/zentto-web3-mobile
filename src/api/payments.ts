@@ -1,5 +1,13 @@
 import { apiFetch, newIdempotencyKey } from './client';
-import type { AccountBalance, CreditInput, Payment, TransferInput } from './types';
+import type {
+  AccountBalance,
+  ChainDeposit,
+  CreditInput,
+  DepositInfo,
+  Payment,
+  TransferInput,
+  WithdrawInput,
+} from './types';
 
 // Ledger del neobanco custodial. El "dinero" del usuario vive aquí (no en la cadena).
 // Endpoints protegidos (auth por cookies httpOnly + CSRF; mutaciones llevan Idempotency-Key).
@@ -30,4 +38,23 @@ export async function credit(input: CreditInput): Promise<Payment> {
     body: input,
     idempotencyKey: newIdempotencyKey(),
   });
+}
+
+/** Retiro on-chain a una wallet externa. Requiere TOTP. Idempotente. */
+export async function withdraw(input: WithdrawInput): Promise<Payment> {
+  return apiFetch<Payment>('/payments/withdraw', {
+    method: 'POST',
+    body: input,
+    idempotencyKey: newIdempotencyKey(),
+  });
+}
+
+/** Dirección de depósito on-chain del usuario (testnet). */
+export async function fetchDepositInfo(): Promise<DepositInfo> {
+  return apiFetch<DepositInfo>('/accounts/deposit-address');
+}
+
+/** Historial de depósitos detectados on-chain. */
+export async function fetchDeposits(): Promise<ChainDeposit[]> {
+  return apiFetch<ChainDeposit[]>('/accounts/deposits');
 }

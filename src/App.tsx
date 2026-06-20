@@ -27,6 +27,8 @@ import ReceivePage from './pages/ReceivePage';
 import MovementsPage from './pages/MovementsPage';
 import ExplorePage from './pages/ExplorePage';
 import ProfilePage from './pages/ProfilePage';
+import KycPage from './pages/KycPage';
+import SecurityPage from './pages/SecurityPage';
 
 function FullScreenLoader() {
   return (
@@ -81,6 +83,8 @@ export default function App() {
             <Route exact path="/movements" component={MovementsPage} />
             <Route exact path="/explore" component={ExplorePage} />
             <Route exact path="/profile" component={ProfilePage} />
+            <Route exact path="/kyc" component={KycPage} />
+            <Route exact path="/security" component={SecurityPage} />
             <Route exact path="/login" render={() => <Redirect to="/home" />} />
             <Route exact path="/register" render={() => <Redirect to="/home" />} />
             <Route render={() => <Redirect to="/home" />} />

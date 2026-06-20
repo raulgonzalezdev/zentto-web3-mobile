@@ -50,6 +50,8 @@ export async function getCsrfToken(): Promise<string | null> {
 interface RequestOptions {
   method?: string;
   body?: unknown;
+  /** Cuerpo multipart/form-data. NO se fija Content-Type (el navegador pone el boundary). */
+  formData?: FormData;
   /** Si false, NO se intenta refresh+retry ante 401 (usado en el sondeo inicial de /auth/me). */
   retryOnAuth?: boolean;
   signal?: AbortSignal;
@@ -105,7 +107,10 @@ export async function apiFetch<T = unknown>(
   const headers: Record<string, string> = {};
   let body: BodyInit | undefined;
 
-  if (opts.body !== undefined) {
+  if (opts.formData !== undefined) {
+    // multipart: NO fijamos Content-Type para que el navegador añada el boundary.
+    body = opts.formData;
+  } else if (opts.body !== undefined) {
     headers['Content-Type'] = 'application/json';
     body = JSON.stringify(opts.body);
   }
