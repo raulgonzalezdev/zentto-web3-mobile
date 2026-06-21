@@ -143,7 +143,7 @@ export default function PublishOfferModal({
               labelPlacement="stacked"
               value={asset}
               onIonChange={(e) => setAsset(e.detail.value)}
-              interface="action-sheet"
+              interface="popover"
             >
               {ASSETS.map((a) => (
                 <IonSelectOption key={a} value={a}>
@@ -201,7 +201,7 @@ export default function PublishOfferModal({
               labelPlacement="stacked"
               value={methodId}
               onIonChange={(e) => setMethodId(e.detail.value)}
-              interface="action-sheet"
+              interface="popover"
               placeholder="Selecciona"
             >
               {(methods.data ?? []).map((m) => (

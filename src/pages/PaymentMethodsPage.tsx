@@ -272,8 +272,7 @@ function AddPaymentMethodModal({
               value={bankName}
               onIonChange={(e) => setBankName(e.detail.value ?? '')}
               placeholder="Selecciona tu banco"
-              interface="action-sheet"
-              cancelText="Cancelar"
+              interface="popover"
             >
               {VE_BANKS.map((b) => (
                 <IonSelectOption key={b.code} value={b.name}>
