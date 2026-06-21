@@ -32,6 +32,11 @@ export const LockProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [locked, setLocked] = useState(false);
   const [ready, setReady] = useState(false);
   const pinEnabledRef = useRef(false);
+  // Momento en que la app pasó a segundo plano. Solo re-bloqueamos si estuvo
+  // fuera más que la ventana de gracia: así, salir 10s a copiar el OTP de Google
+  // Authenticator (o el propio prompt de huella) NO re-bloquea ni crea ciclos.
+  const pausedAtRef = useRef(Date.now());
+  const GRACE_MS = 30_000;
 
   const refreshLock = useCallback(async () => {
     const [pin, bio] = await Promise.all([isPinSet(), isBiometricEnabled()]);
@@ -61,21 +66,30 @@ export const LockProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => clearTimeout(t);
   }, []);
 
-  // Al reanudar la app (volver del background), re-bloquear si hay PIN.
+  // Re-bloqueo con PERIODO DE GRACIA: registra el momento de pausa y, al volver,
+  // solo re-bloquea si estuvo en segundo plano > 30s. Evita el ciclo huella↔PIN
+  // (el prompt de huella dispara pause/resume al instante) y no interrumpe ir a
+  // buscar un código OTP.
   useEffect(() => {
-    let handle: { remove: () => void } | undefined;
+    let pauseH: { remove: () => void } | undefined;
+    let resumeH: { remove: () => void } | undefined;
     (async () => {
       try {
-        const h = await App.addListener('resume', () => {
-          if (pinEnabledRef.current) setLocked(true);
+        pauseH = await App.addListener('pause', () => {
+          pausedAtRef.current = Date.now();
         });
-        handle = h;
+        resumeH = await App.addListener('resume', () => {
+          if (pinEnabledRef.current && Date.now() - pausedAtRef.current > GRACE_MS) {
+            setLocked(true);
+          }
+        });
       } catch {
-        /* en web el plugin App puede no emitir resume; no es crítico */
+        /* en web el plugin App puede no emitir estos eventos; no es crítico */
       }
     })();
     return () => {
-      handle?.remove();
+      pauseH?.remove();
+      resumeH?.remove();
     };
   }, []);
 

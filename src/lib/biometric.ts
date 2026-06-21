@@ -26,12 +26,12 @@ export async function isBiometricAvailable(): Promise<boolean> {
 export async function verifyBiometric(reason = 'Desbloquea Zentto'): Promise<boolean> {
   if (!isNativePlatform()) return false;
   try {
+    // Mínimo y sin fallback al PIN/patrón del DISPOSITIVO (useFallback:false):
+    // solo acepta la huella; si falla, el usuario usa el PIN de la app.
     await NativeBiometric.verifyIdentity({
       reason,
       title: 'Zentto',
-      subtitle: 'Verifica tu identidad',
-      description: reason,
-      negativeButtonText: 'Usar PIN',
+      subtitle: 'Desbloquea con tu huella',
       useFallback: false,
     });
     return true;

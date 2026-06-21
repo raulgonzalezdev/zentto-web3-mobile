@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { IonButton, IonContent, IonPage } from '@ionic/react';
 import PinPad from './PinPad';
 import { useLock } from '../auth/LockContext';
@@ -30,11 +30,17 @@ export default function LockScreen() {
       notifySuccess();
       unlock();
     }
+    // Si falla/cancela NO re-lanzamos: el usuario usa el PIN o el botón
+    // "Desbloquear con huella" manualmente. Evita el ciclo huella↔PIN.
   }, [unlock]);
 
-  // Auto-lanzar el prompt de huella al abrir, si está disponible.
+  // Auto-lanzar el prompt de huella UNA SOLA VEZ al abrir, si está disponible.
+  const autoTriedRef = useRef(false);
   useEffect(() => {
-    if (bioReady) void tryBiometric();
+    if (bioReady && !autoTriedRef.current) {
+      autoTriedRef.current = true;
+      void tryBiometric();
+    }
   }, [bioReady, tryBiometric]);
 
   // Verificar el PIN cuando alcanza ≥4 dígitos al completar.
