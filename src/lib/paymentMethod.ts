@@ -25,6 +25,13 @@ export function paymentMethodToText(m: PaymentMethod): string {
 }
 
 /** Pares clave/valor copiables de un método de cobro (para la pantalla de detalle). */
+/** Bloque multilínea con TODOS los datos del método, listo para copiar de una vez. */
+export function paymentMethodToBlock(m: PaymentMethod): string {
+  const lines: string[] = [m.label || paymentMethodTypeLabel(m.type)];
+  for (const f of paymentMethodFields(m)) lines.push(`${f.label}: ${f.value}`);
+  return lines.join('\n');
+}
+
 export function paymentMethodFields(m: PaymentMethod): { label: string; value: string }[] {
   const fields: { label: string; value: string }[] = [];
   if (m.bankName) fields.push({ label: 'Banco', value: m.bankName });

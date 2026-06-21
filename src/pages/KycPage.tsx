@@ -6,6 +6,8 @@ import {
   IonInput,
   IonItem,
   IonPage,
+  IonRefresher,
+  IonRefresherContent,
   IonSpinner,
   useIonToast,
 } from '@ionic/react';
@@ -118,6 +120,15 @@ export default function KycPage() {
     <IonPage>
       <ZenttoHeader title="Verificar identidad" />
       <IonContent className="zt-page" fullscreen>
+        <IonRefresher
+          slot="fixed"
+          onIonRefresh={async (e) => {
+            await statusQ.refetch();
+            e.detail.complete();
+          }}
+        >
+          <IonRefresherContent />
+        </IonRefresher>
         <div className="zt-screen">
           {/* Estado actual */}
           <div className="zt-card" style={{ marginTop: 8 }}>

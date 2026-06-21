@@ -64,7 +64,7 @@ export default function LockScreen() {
   return (
     <IonPage>
       <IonContent className="zt-page" fullscreen>
-        <div className="zt-lock">
+        <div className="zt-lock zt-noscale">
           <div className="zt-brand" style={{ marginTop: 40 }}>
             <div className="zt-logo">Z</div>
             <h1>Zentto</h1>

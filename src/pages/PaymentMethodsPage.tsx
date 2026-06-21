@@ -10,6 +10,8 @@ import {
   IonLabel,
   IonModal,
   IonPage,
+  IonSelect,
+  IonSelectOption,
   IonSegment,
   IonSegmentButton,
   IonTitle,
@@ -31,7 +33,12 @@ import {
   usePaymentMethods,
 } from '../hooks/usePaymentMethods';
 import { CardSkeleton } from '../components/Skeletons';
-import { paymentMethodFields, paymentMethodTypeLabel } from '../lib/paymentMethod';
+import {
+  paymentMethodFields,
+  paymentMethodToBlock,
+  paymentMethodTypeLabel,
+} from '../lib/paymentMethod';
+import { VE_BANKS, bankLabel } from '../lib/venezuelanBanks';
 import { copyText } from '../lib/clipboard';
 import { tapLight, selection, notifySuccess, notifyError } from '../lib/haptics';
 import { ApiError } from '../api/client';
@@ -131,6 +138,20 @@ export default function PaymentMethodsPage() {
                     </button>
                   </div>
                 ))}
+
+                <IonButton
+                  expand="block"
+                  fill="outline"
+                  size="small"
+                  style={{ marginTop: 10 }}
+                  onClick={() => {
+                    tapLight();
+                    copy(paymentMethodToBlock(m));
+                  }}
+                >
+                  <IonIcon slot="start" icon={copyOutline} />
+                  Copiar todo
+                </IonButton>
               </div>
             ))}
             </div>
@@ -245,13 +266,21 @@ function AddPaymentMethodModal({
           </IonItem>
 
           <IonItem className="zt-card" lines="none">
-            <IonInput
+            <IonSelect
               label="Banco"
               labelPlacement="stacked"
               value={bankName}
-              onIonInput={(e) => setBankName(e.detail.value ?? '')}
-              placeholder="Ej: Banco de Venezuela"
-            />
+              onIonChange={(e) => setBankName(e.detail.value ?? '')}
+              placeholder="Selecciona tu banco"
+              interface="action-sheet"
+              cancelText="Cancelar"
+            >
+              {VE_BANKS.map((b) => (
+                <IonSelectOption key={b.code} value={b.name}>
+                  {bankLabel(b)}
+                </IonSelectOption>
+              ))}
+            </IonSelect>
           </IonItem>
 
           {type === 'pago_movil' ? (

@@ -57,7 +57,7 @@ export default function LoginPage() {
   return (
     <IonPage>
       <IonContent className="zt-page" fullscreen>
-        <div className="zt-screen">
+        <div className="zt-screen zt-noscale">
           <div className="zt-brand zt-enter">
             <div className="zt-logo">Z</div>
             <h1>Zentto</h1>

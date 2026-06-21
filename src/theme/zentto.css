@@ -76,6 +76,11 @@ body {
 ion-app {
   zoom: var(--zt-ui-scale);
 }
+/* Pantallas que vuelven a tamaño NORMAL (PIN/Login/Registro): zoom inverso
+   que cancela el --zt-ui-scale global → se ven como antes (100%). */
+.zt-noscale {
+  zoom: calc(1 / var(--zt-ui-scale));
+}
 
 /* ════════════════════════════════════════════════════════════
    CAJA NORMAL — Ionic fuerza MAYÚSCULAS en varios componentes.
