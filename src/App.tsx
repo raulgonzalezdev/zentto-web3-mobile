@@ -15,11 +15,13 @@ import {
   paperPlaneOutline,
   qrCodeOutline,
   timeOutline,
-  compassOutline,
+  swapHorizontalOutline,
 } from 'ionicons/icons';
 
 import SettingsMenu from './components/SettingsMenu';
+import LockScreen from './components/LockScreen';
 import { useAuth } from './auth/AuthContext';
+import { useLock } from './auth/LockContext';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/HomePage';
@@ -30,6 +32,10 @@ import ExplorePage from './pages/ExplorePage';
 import ProfilePage from './pages/ProfilePage';
 import KycPage from './pages/KycPage';
 import SecurityPage from './pages/SecurityPage';
+import P2pPage from './pages/P2pPage';
+import PaymentMethodsPage from './pages/PaymentMethodsPage';
+import AppSecurityPage from './pages/AppSecurityPage';
+import LegalPage from './pages/LegalPage';
 
 function FullScreenLoader() {
   return (
@@ -48,11 +54,21 @@ function FullScreenLoader() {
 
 export default function App() {
   const { user, loading } = useAuth();
+  const { locked } = useLock();
 
   if (loading) {
     return (
       <IonApp>
         <FullScreenLoader />
+      </IonApp>
+    );
+  }
+
+  // App bloqueada por PIN/huella → overlay a pantalla completa (encima de todo).
+  if (locked) {
+    return (
+      <IonApp>
+        <LockScreen />
       </IonApp>
     );
   }
@@ -65,6 +81,7 @@ export default function App() {
           <IonRouterOutlet>
             <Route exact path="/login" component={LoginPage} />
             <Route exact path="/register" component={RegisterPage} />
+            <Route exact path="/legal/:slug" component={LegalPage} />
             <Route render={() => <Redirect to="/login" />} />
           </IonRouterOutlet>
         </IonReactRouter>
@@ -84,10 +101,14 @@ export default function App() {
             <Route exact path="/send" component={SendPage} />
             <Route exact path="/receive" component={ReceivePage} />
             <Route exact path="/movements" component={MovementsPage} />
+            <Route exact path="/p2p" component={P2pPage} />
             <Route exact path="/explore" component={ExplorePage} />
             <Route exact path="/profile" component={ProfilePage} />
             <Route exact path="/kyc" component={KycPage} />
             <Route exact path="/security" component={SecurityPage} />
+            <Route exact path="/payment-methods" component={PaymentMethodsPage} />
+            <Route exact path="/app-security" component={AppSecurityPage} />
+            <Route exact path="/legal/:slug" component={LegalPage} />
             <Route exact path="/login" render={() => <Redirect to="/home" />} />
             <Route exact path="/register" render={() => <Redirect to="/home" />} />
             <Route render={() => <Redirect to="/home" />} />
@@ -106,13 +127,13 @@ export default function App() {
               <IonIcon icon={qrCodeOutline} />
               <IonLabel>Recibir</IonLabel>
             </IonTabButton>
+            <IonTabButton tab="p2p" href="/p2p">
+              <IonIcon icon={swapHorizontalOutline} />
+              <IonLabel>P2P</IonLabel>
+            </IonTabButton>
             <IonTabButton tab="movements" href="/movements">
               <IonIcon icon={timeOutline} />
               <IonLabel>Historial</IonLabel>
-            </IonTabButton>
-            <IonTabButton tab="explore" href="/explore">
-              <IonIcon icon={compassOutline} />
-              <IonLabel>Explorar</IonLabel>
             </IonTabButton>
           </IonTabBar>
         </IonTabs>

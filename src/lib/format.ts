@@ -34,6 +34,11 @@ export function formatDate(value: string | number | null | undefined): string {
   return `${day.replace('.', '')} · ${time}`;
 }
 
+/** Formatea un precio en VES (bolívares) con separador de miles. */
+export function formatVes(v: string | number | null | undefined): string {
+  return `Bs. ${formatAmount(v)}`;
+}
+
 /** Etiqueta + color para un estado de pago. */
 export function paymentStatusMeta(status: string): { label: string; color: string } {
   const s = (status || '').toLowerCase();

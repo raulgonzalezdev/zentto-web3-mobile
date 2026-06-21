@@ -20,6 +20,10 @@ import {
   personCircleOutline,
   shieldCheckmarkOutline,
   shieldOutline,
+  cardOutline,
+  lockClosedOutline,
+  documentTextOutline,
+  compassOutline,
 } from 'ionicons/icons';
 import { useHistory } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
@@ -89,6 +93,14 @@ export default function SettingsMenu() {
             </IonItem>
           </IonMenuToggle>
 
+          <IonMenuToggle autoHide={false}>
+            <IonItem button detail={false} onClick={() => go('/payment-methods')}>
+              <IonIcon slot="start" icon={cardOutline} color="primary" />
+              <IonLabel>Métodos de cobro</IonLabel>
+              <IonIcon slot="end" icon={chevronForwardOutline} className="zt-menu-chevron" />
+            </IonItem>
+          </IonMenuToggle>
+
           <IonItem lines="full">
             <IonIcon slot="start" icon={mailOutline} className="zt-menu-icon-dim" />
             <IonLabel>Correo</IonLabel>
@@ -129,12 +141,28 @@ export default function SettingsMenu() {
               </IonNote>
             </IonItem>
           </IonMenuToggle>
+
+          <IonMenuToggle autoHide={false}>
+            <IonItem button detail={false} onClick={() => go('/app-security')}>
+              <IonIcon slot="start" icon={lockClosedOutline} color="primary" />
+              <IonLabel>Bloqueo de la app</IonLabel>
+              <IonIcon slot="end" icon={chevronForwardOutline} className="zt-menu-chevron" />
+            </IonItem>
+          </IonMenuToggle>
         </IonList>
 
         <IonList lines="full" className="zt-menu-list">
           <IonListHeader>
             <IonLabel>Preferencias</IonLabel>
           </IonListHeader>
+
+          <IonMenuToggle autoHide={false}>
+            <IonItem button detail={false} onClick={() => go('/explore')}>
+              <IonIcon slot="start" icon={compassOutline} color="primary" />
+              <IonLabel>Explorar red</IonLabel>
+              <IonIcon slot="end" icon={chevronForwardOutline} className="zt-menu-chevron" />
+            </IonItem>
+          </IonMenuToggle>
 
           <IonItem detail={false}>
             <IonIcon slot="start" icon={globeOutline} className="zt-menu-icon-dim" />
@@ -143,6 +171,36 @@ export default function SettingsMenu() {
               Español
             </IonNote>
           </IonItem>
+        </IonList>
+
+        <IonList lines="full" className="zt-menu-list">
+          <IonListHeader>
+            <IonLabel>Legal</IonLabel>
+          </IonListHeader>
+
+          <IonMenuToggle autoHide={false}>
+            <IonItem button detail={false} onClick={() => go('/legal/terminos')}>
+              <IonIcon slot="start" icon={documentTextOutline} className="zt-menu-icon-dim" />
+              <IonLabel>Términos y Condiciones</IonLabel>
+              <IonIcon slot="end" icon={chevronForwardOutline} className="zt-menu-chevron" />
+            </IonItem>
+          </IonMenuToggle>
+
+          <IonMenuToggle autoHide={false}>
+            <IonItem button detail={false} onClick={() => go('/legal/privacidad')}>
+              <IonIcon slot="start" icon={documentTextOutline} className="zt-menu-icon-dim" />
+              <IonLabel>Política de Privacidad</IonLabel>
+              <IonIcon slot="end" icon={chevronForwardOutline} className="zt-menu-chevron" />
+            </IonItem>
+          </IonMenuToggle>
+
+          <IonMenuToggle autoHide={false}>
+            <IonItem button detail={false} onClick={() => go('/legal/responsabilidad')}>
+              <IonIcon slot="start" icon={documentTextOutline} className="zt-menu-icon-dim" />
+              <IonLabel>Aviso de Responsabilidad</IonLabel>
+              <IonIcon slot="end" icon={chevronForwardOutline} className="zt-menu-chevron" />
+            </IonItem>
+          </IonMenuToggle>
         </IonList>
 
         <div className="zt-menu-footer">

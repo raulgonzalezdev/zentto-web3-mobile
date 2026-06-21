@@ -658,3 +658,109 @@ ion-segment-button ion-label {
   --background: transparent;
   font-weight: 600;
 }
+
+/* ════════════════════════════════════════════════════════════
+   MODAL — hoja oscura consistente con el tema
+   ════════════════════════════════════════════════════════════ */
+.zt-modal {
+  --background: var(--zt-bg);
+  --height: 100%;
+}
+
+.zt-modal ion-content {
+  --background: var(--zt-bg);
+}
+
+/* ════════════════════════════════════════════════════════════
+   PANTALLA DE BLOQUEO + TECLADO PIN
+   ════════════════════════════════════════════════════════════ */
+.zt-lock {
+  padding: 16px 24px calc(24px + var(--zt-safe-bottom));
+  max-width: 420px;
+  margin: 0 auto;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.zt-pin {
+  margin-top: 18px;
+}
+
+.zt-pin-dots {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin: 6px 0 26px;
+}
+
+.zt-pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--zt-border);
+  background: transparent;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.zt-pin-dot.on {
+  background: var(--zt-indigo);
+  border-color: var(--zt-indigo);
+}
+
+.zt-pin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.zt-pin-key {
+  height: 64px;
+  border-radius: 50%;
+  border: 1px solid var(--zt-border);
+  background: var(--zt-card);
+  color: var(--zt-text);
+  font-size: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.1s ease;
+}
+
+.zt-pin-key:active {
+  background: var(--zt-card-2);
+}
+
+.zt-pin-key-aux {
+  background: transparent;
+  border-color: transparent;
+  font-size: 22px;
+  color: var(--zt-cyan);
+}
+
+.zt-pin-key-empty {
+  background: transparent;
+  border: none;
+  cursor: default;
+}
+
+/* ════════════════════════════════════════════════════════════
+   PÁGINAS LEGALES
+   ════════════════════════════════════════════════════════════ */
+.zt-legal h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--zt-text);
+}
+
+.zt-legal-p {
+  color: var(--zt-text-dim);
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0 0 10px;
+}

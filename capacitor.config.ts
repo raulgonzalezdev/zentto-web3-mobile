@@ -11,6 +11,17 @@ const config: CapacitorConfig = {
     Keyboard: {
       resizeOnFullScreen: true,
     },
+    SplashScreen: {
+      // Lo ocultamos manualmente desde main.tsx tras cargar el bundle.
+      launchAutoHide: false,
+      backgroundColor: '#0b0e1a',
+      androidScaleType: 'CENTER_CROP',
+      showSpinner: true,
+      androidSpinnerStyle: 'small',
+      spinnerColor: '#6366f1',
+      splashFullScreen: true,
+      splashImmersive: true,
+    },
   },
 };
 

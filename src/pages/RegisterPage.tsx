@@ -96,7 +96,14 @@ export default function RegisterPage() {
             {busy ? <IonSpinner name="crescent" /> : 'Crear cuenta'}
           </IonButton>
 
-          <IonText className="zt-muted" style={{ display: 'block', textAlign: 'center', marginTop: 18 }}>
+          <IonText className="zt-muted" style={{ display: 'block', textAlign: 'center', marginTop: 14, fontSize: 12 }}>
+            Al registrarte aceptas los{' '}
+            <Link className="zt-link" to="/legal/terminos">Términos</Link>,{' '}
+            <Link className="zt-link" to="/legal/privacidad">Privacidad</Link> y el{' '}
+            <Link className="zt-link" to="/legal/responsabilidad">Aviso de Responsabilidad</Link>.
+          </IonText>
+
+          <IonText className="zt-muted" style={{ display: 'block', textAlign: 'center', marginTop: 14 }}>
             ¿Ya tienes cuenta? <Link className="zt-link" to="/login">Iniciar sesión</Link>
           </IonText>
         </div>

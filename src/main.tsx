@@ -21,8 +21,23 @@ import './theme/zentto.css';
 
 import App from './App';
 import { AuthProvider } from './auth/AuthContext';
+import { LockProvider } from './auth/LockContext';
 
 setupIonicReact({ mode: 'md' });
+
+// Ocultar el splash nativo una vez cargado el bundle (carga dinámica para no
+// exigir el plugin en web). Evita el flash blanco por defecto.
+void (async () => {
+  try {
+    const cap = (globalThis as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+    if (cap?.isNativePlatform?.()) {
+      const { SplashScreen } = await import('@capacitor/splash-screen');
+      await SplashScreen.hide();
+    }
+  } catch {
+    /* sin plugin (web): no-op */
+  }
+})();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,7 +55,9 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <App />
+        <LockProvider>
+          <App />
+        </LockProvider>
       </AuthProvider>
     </QueryClientProvider>
   </React.StrictMode>,

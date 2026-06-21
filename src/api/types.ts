@@ -173,3 +173,72 @@ export interface EvmTx {
   found?: boolean;
   [k: string]: unknown;
 }
+
+// ── P2P (mercado compra/venta estilo Binance P2P sobre el ledger) ──
+
+export type P2pSide = 'buy' | 'sell';
+export type P2pOrderStatus = 'open' | 'taken' | 'cancelled' | string;
+export type P2pTradeStatus = 'pending' | 'completed' | 'cancelled' | string;
+
+/** Oferta del order book. `makerEmail` solo viene en el listado público. */
+export interface P2pOrder {
+  id: string;
+  makerUserId: string;
+  makerEmail?: string | null;
+  side: P2pSide;
+  asset: string; // USDT | USDC
+  amount: string; // cantidad de cripto (decimal)
+  priceVes: string; // precio por unidad en VES (decimal)
+  paymentMethod?: string | null;
+  status: P2pOrderStatus;
+  createdAt: string | number;
+  [k: string]: unknown;
+}
+
+export interface P2pTrade {
+  id: string;
+  orderId: string;
+  buyerUserId: string;
+  sellerUserId: string;
+  asset: string;
+  amount: string;
+  priceVes: string;
+  status: P2pTradeStatus;
+  createdAt: string | number;
+  [k: string]: unknown;
+}
+
+export interface CreateP2pOrderInput {
+  side: P2pSide;
+  asset: string; // USDT | USDC
+  amount: string;
+  priceVes: string;
+  paymentMethod?: string;
+}
+
+// ── Métodos de cobro (Pago Móvil / cuenta bancaria) ──
+
+export type PaymentMethodType = 'pago_movil' | 'bank_account';
+
+export interface PaymentMethod {
+  id: string;
+  type: PaymentMethodType;
+  label: string;
+  bankName?: string | null;
+  accountHolder?: string | null;
+  idNumber?: string | null; // cédula/RIF
+  phone?: string | null; // pago móvil
+  accountNumber?: string | null; // nro de cuenta
+  createdAt: string | number;
+  [k: string]: unknown;
+}
+
+export interface CreatePaymentMethodInput {
+  type: PaymentMethodType;
+  label: string;
+  bankName?: string;
+  accountHolder?: string;
+  idNumber?: string;
+  phone?: string;
+  accountNumber?: string;
+}
