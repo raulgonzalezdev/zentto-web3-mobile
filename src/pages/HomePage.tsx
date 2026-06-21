@@ -109,15 +109,31 @@ export default function HomePage() {
               {user?.displayName || user?.email || 'Mi cuenta'}
             </div>
 
-            <div className="zt-actions">
-              <IonButton color="light" onClick={() => history.push('/send')}>
-                <IonIcon slot="start" icon={paperPlaneOutline} />
-                Enviar
-              </IonButton>
-              <IonButton color="secondary" onClick={() => history.push('/receive')}>
-                <IonIcon slot="start" icon={qrCodeOutline} />
-                Recibir
-              </IonButton>
+            <div className="zt-quick">
+              <button className="zt-quick-item" type="button" onClick={() => history.push('/send')}>
+                <span className="zt-quick-ic">
+                  <IonIcon icon={paperPlaneOutline} />
+                </span>
+                <span className="zt-quick-label">Enviar</span>
+              </button>
+              <button className="zt-quick-item" type="button" onClick={() => history.push('/receive')}>
+                <span className="zt-quick-ic">
+                  <IonIcon icon={qrCodeOutline} />
+                </span>
+                <span className="zt-quick-label">Recibir</span>
+              </button>
+              <button className="zt-quick-item" type="button" onClick={() => history.push('/movements')}>
+                <span className="zt-quick-ic">
+                  <IonIcon icon={swapHorizontalOutline} />
+                </span>
+                <span className="zt-quick-label">Historial</span>
+              </button>
+              <button className="zt-quick-item" type="button" onClick={handleFaucet} disabled={creditMut.isPending}>
+                <span className="zt-quick-ic">
+                  <IonIcon icon={addCircleOutline} />
+                </span>
+                <span className="zt-quick-label">Recargar</span>
+              </button>
             </div>
           </div>
 

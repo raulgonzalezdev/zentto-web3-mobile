@@ -80,7 +80,7 @@ function MovementRow({ p }: { p: Payment }) {
         ? arrowDownOutline
         : arrowUpOutline;
   const sign = inflow ? '+' : '−';
-  const amountColor = inflow ? 'var(--zt-success)' : 'var(--zt-text)';
+  const amountColor = inflow ? 'var(--zt-success)' : 'var(--zt-danger)';
 
   const title =
     (p.type || '').toLowerCase() === 'credit'
@@ -90,25 +90,28 @@ function MovementRow({ p }: { p: Payment }) {
         : `Enviado a ${p.counterparty ?? '—'}`;
 
   return (
-    <div className="zt-row">
-      <div className="zt-token">
-        <div className="zt-token-badge" style={inflow ? { color: 'var(--zt-success)' } : undefined}>
-          <IonIcon icon={icon} />
-        </div>
-        <div>
-          <div>{title}</div>
-          <div className="zt-muted" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span>{formatDate(p.createdAt)}</span>
-            <span className="zt-status-chip" style={{ color: status.color, borderColor: status.color }}>
-              {status.label}
-            </span>
-          </div>
-        </div>
+    <div className="zt-tx">
+      <div
+        className="zt-tx-ic"
+        style={inflow ? { color: 'var(--zt-success)', background: 'rgba(52,211,153,0.16)' } : undefined}
+      >
+        <IonIcon icon={icon} />
       </div>
-      <strong style={{ color: amountColor, whiteSpace: 'nowrap' }}>
-        {sign}
-        {formatAmount(p.amount)} {p.asset}
-      </strong>
+
+      <div className="zt-tx-main">
+        <div className="zt-tx-title">{title}</div>
+        <div className="zt-tx-date">{formatDate(p.createdAt)}</div>
+      </div>
+
+      <div className="zt-tx-right">
+        <span className="zt-tx-amount" style={{ color: amountColor }}>
+          {sign}
+          {formatAmount(p.amount)} {p.asset}
+        </span>
+        <span className="zt-status-chip" style={{ color: status.color }}>
+          {status.label}
+        </span>
+      </div>
     </div>
   );
 }

@@ -66,6 +66,30 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* ════════════════════════════════════════════════════════════
+   CAJA NORMAL — Ionic fuerza MAYÚSCULAS en varios componentes.
+   Se anula globalmente: botones, segmentos, tabs, list-headers, chips.
+   Regla dura del producto: nada de uppercase de estilo.
+   ════════════════════════════════════════════════════════════ */
+ion-button,
+ion-segment-button,
+ion-tab-button,
+ion-list-header,
+ion-chip,
+ion-item-divider,
+.button,
+.button-native {
+  text-transform: none !important;
+  letter-spacing: 0;
+}
+
+ion-button {
+  --letter-spacing: 0;
+  --border-radius: 14px;
+  font-weight: 600;
+  min-height: 46px;
+}
+
 /* ── Tipografía / jerarquía ── */
 h1,
 h2,
@@ -119,14 +143,13 @@ h3 {
 
 .zt-balance-label {
   font-size: 13px;
-  opacity: 0.8;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  opacity: 0.82;
+  letter-spacing: 0;
 }
 
 .zt-balance-amount {
-  font-size: 40px;
-  font-weight: 800;
+  font-size: 42px;
+  font-weight: 700;
   margin: 6px 0 2px;
   letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
@@ -166,6 +189,117 @@ h3 {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   margin-top: 18px;
+}
+
+/* ── Barra de accesos rápidos (estilo Meru/Binance) ── */
+.zt-quick {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.zt-quick-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #fff;
+}
+
+.zt-quick-ic {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 21px;
+  transition: background 0.15s ease;
+}
+
+.zt-quick-item:active .zt-quick-ic {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.zt-quick-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  opacity: 0.95;
+}
+
+/* ════════════════════════════════════════════════════════════
+   FILA DE TRANSACCIÓN — patrón Meru: horizontal, sin overflow.
+   [ícono 40px] [izq flex:1 min-width:0] ... [der auto, derecha]
+   ════════════════════════════════════════════════════════════ */
+.zt-tx {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--zt-border);
+}
+
+.zt-tx:last-child {
+  border-bottom: none;
+}
+
+.zt-tx-ic {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 19px;
+  background: rgba(99, 102, 241, 0.16);
+  color: var(--zt-cyan);
+}
+
+.zt-tx-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.zt-tx-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--zt-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.zt-tx-date {
+  font-size: 13px;
+  color: var(--zt-text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.zt-tx-right {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  text-align: right;
+}
+
+.zt-tx-amount {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .zt-card {
@@ -296,13 +430,23 @@ h3 {
 .zt-status-chip {
   display: inline-flex;
   align-items: center;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 600;
   line-height: 1;
-  padding: 3px 8px;
+  padding: 4px 9px;
   border-radius: 999px;
+  text-transform: none;
+  white-space: nowrap;
+  /* Fallback para WebViews sin color-mix: borde de color. */
   border: 1px solid currentColor;
-  opacity: 0.95;
+}
+
+/* Mejora progresiva: fondo y borde atenuados (Chromium 111+). */
+@supports (background: color-mix(in srgb, red 10%, transparent)) {
+  .zt-status-chip {
+    background: color-mix(in srgb, currentColor 14%, transparent);
+    border-color: color-mix(in srgb, currentColor 38%, transparent);
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -469,10 +613,10 @@ ion-segment-button ion-label {
 
 .zt-menu-list ion-list-header {
   --color: var(--zt-text-dim);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
   min-height: 34px;
 }
 
