@@ -103,6 +103,15 @@ export interface KycVerifyResult {
   [k: string]: unknown;
 }
 
+/** Sesión hospedada de Didit: el usuario hace documento + selfie con óvalo + liveness en `redirectUrl`. */
+export interface KycSession {
+  id: string;
+  status: KycStatus;
+  provider: string;
+  redirectUrl: string;
+  [k: string]: unknown;
+}
+
 // ── 2FA (Google Authenticator / TOTP) ──
 
 export interface TotpSetup {

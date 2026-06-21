@@ -1,12 +1,26 @@
 import { apiFetch } from './client';
-import type { KycStatusView, KycVerifyResult } from './types';
+import type { KycSession, KycStatusView, KycVerifyResult } from './types';
 
-// KYC — verificación de identidad. Flujo standalone síncrono (Didit): la app
-// captura las imágenes y el backend resuelve la verificación de forma síncrona.
+// KYC — verificación de identidad (Didit).
+// - Flujo principal: sesión hospedada de Didit. La app abre `redirectUrl` y el
+//   usuario hace documento + selfie con óvalo + liveness en la pantalla de Didit.
+//   Cuando Didit decide, el webhook actualiza /kyc/status solo.
+// - Flujo secundario (legacy): captura manual de imágenes vía /kyc/verify-documents.
 
 /** Estado KYC del usuario. */
 export async function fetchKycStatus(): Promise<KycStatusView> {
   return apiFetch<KycStatusView>('/kyc/status');
+}
+
+/**
+ * Crea una sesión hospedada de Didit y devuelve la `redirectUrl` donde el
+ * usuario completa toda la verificación (documento + selfie con óvalo + liveness).
+ */
+export async function createKycSession(fullName?: string): Promise<KycSession> {
+  return apiFetch<KycSession>('/kyc/session', {
+    method: 'POST',
+    body: fullName?.trim() ? { fullName: fullName.trim() } : {},
+  });
 }
 
 export interface VerifyDocumentsInput {

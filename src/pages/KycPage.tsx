@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   IonButton,
   IonContent,
@@ -11,16 +11,25 @@ import {
   IonSpinner,
   useIonToast,
 } from '@ionic/react';
+import { Browser } from '@capacitor/browser';
+import { App } from '@capacitor/app';
 import {
   shieldCheckmarkOutline,
   checkmarkCircle,
   closeCircle,
   timeOutline,
   documentTextOutline,
+  chevronDownOutline,
+  refreshOutline,
 } from 'ionicons/icons';
 import ZenttoHeader from '../components/ZenttoHeader';
 import ImageCapture from '../components/ImageCapture';
-import { useKycStatus, useVerifyDocuments } from '../hooks/useKyc';
+import {
+  useKycStatus,
+  useVerifyDocuments,
+  useCreateKycSession,
+  useRefreshKycStatus,
+} from '../hooks/useKyc';
 import { tapLight, notifySuccess, notifyError, notifyWarning } from '../lib/haptics';
 import { ApiError } from '../api/client';
 import type { CapturedImage } from '../lib/capture';
@@ -34,22 +43,22 @@ const STATUS_META: Record<
     label: 'Sin iniciar',
     color: 'var(--zt-text-dim)',
     icon: documentTextOutline,
-    msg: 'Aún no has verificado tu identidad. Captura tu documento para empezar.',
+    msg: 'Aún no has verificado tu identidad. Inicia la verificación para empezar.',
   },
   pending: {
-    label: 'En progreso',
+    label: 'Pendiente',
     color: 'var(--zt-warning)',
     icon: timeOutline,
-    msg: 'Tu verificación está en curso.',
+    msg: 'Tu verificación está en proceso; desliza hacia abajo para actualizar.',
   },
   in_review: {
     label: 'En revisión',
     color: 'var(--zt-warning)',
     icon: timeOutline,
-    msg: 'Un operador está revisando tu verificación. Te avisaremos del resultado.',
+    msg: 'Tu verificación está en proceso; desliza hacia abajo para actualizar.',
   },
   approved: {
-    label: 'Verificada',
+    label: 'Aprobada',
     color: 'var(--zt-success)',
     icon: checkmarkCircle,
     msg: 'Tu identidad está verificada. Ya puedes operar sin límites de KYC.',
@@ -69,19 +78,70 @@ function meta(status: KycStatus) {
 export default function KycPage() {
   const [present] = useIonToast();
   const statusQ = useKycStatus();
+  const sessionMut = useCreateKycSession();
   const verifyMut = useVerifyDocuments();
+  const refreshKyc = useRefreshKycStatus();
+
+  const [fullName, setFullName] = useState('');
+  const [showManual, setShowManual] = useState(false);
 
   const [front, setFront] = useState<CapturedImage | null>(null);
   const [back, setBack] = useState<CapturedImage | null>(null);
   const [selfie, setSelfie] = useState<CapturedImage | null>(null);
-  const [fullName, setFullName] = useState('');
+
+  // Mientras una sesión de Didit esté abierta, queremos re-consultar el estado
+  // cuando el usuario vuelve a la app (cierre del browser o re-enfoque).
+  const sessionOpen = useRef(false);
 
   const status = statusQ.data?.status ?? 'not_started';
   const m = meta(status);
   const isApproved = status === 'approved';
-  const canSubmit = !!front && !verifyMut.isPending && !isApproved;
+  const isRejected = status === 'rejected';
+  const inProgress = status === 'pending' || status === 'in_review';
+  const canSubmitManual = !!front && !verifyMut.isPending && !isApproved;
 
-  async function submit() {
+  // Re-consulta el estado al volver del browser hospedado de Didit. El webhook
+  // de Didit ya habrá actualizado /kyc/status; aquí solo refrescamos la query.
+  useEffect(() => {
+    let browserH: { remove: () => void } | undefined;
+    let resumeH: { remove: () => void } | undefined;
+
+    const syncIfReturning = () => {
+      if (!sessionOpen.current) return;
+      sessionOpen.current = false;
+      void refreshKyc();
+    };
+
+    void (async () => {
+      browserH = await Browser.addListener('browserFinished', syncIfReturning);
+      resumeH = await App.addListener('resume', syncIfReturning);
+    })();
+
+    return () => {
+      browserH?.remove();
+      resumeH?.remove();
+    };
+  }, [refreshKyc]);
+
+  async function startSession() {
+    tapLight();
+    try {
+      const session = await sessionMut.mutateAsync(fullName.trim() || undefined);
+      if (!session.redirectUrl) {
+        notifyError();
+        present({ message: 'No se recibió la URL de verificación', duration: 2400, color: 'danger' });
+        return;
+      }
+      sessionOpen.current = true;
+      await Browser.open({ url: session.redirectUrl });
+    } catch (err) {
+      notifyError();
+      const msg = err instanceof ApiError ? err.message : 'No se pudo iniciar la verificación';
+      present({ message: msg, duration: 2600, color: 'danger' });
+    }
+  }
+
+  async function submitManual() {
     if (!front) {
       notifyWarning();
       present({ message: 'El documento (frente) es obligatorio', duration: 1800, color: 'warning' });
@@ -116,6 +176,8 @@ export default function KycPage() {
     }
   }
 
+  const sessionPending = sessionMut.isPending;
+
   return (
     <IonPage>
       <ZenttoHeader title="Verificar identidad" />
@@ -147,9 +209,10 @@ export default function KycPage() {
               )}
             </div>
             <p className="zt-muted" style={{ margin: '6px 0 0' }}>
+              {isApproved ? '✅ ' : ''}
               {m.msg}
             </p>
-            {status === 'rejected' && statusQ.data?.decisionReason && (
+            {isRejected && statusQ.data?.decisionReason && (
               <p className="zt-muted" style={{ color: 'var(--zt-danger)', margin: '6px 0 0' }}>
                 Motivo: {statusQ.data.decisionReason}
               </p>
@@ -162,55 +225,136 @@ export default function KycPage() {
           </div>
 
           {isApproved ? (
-            <div className="zt-banner" style={{ background: 'rgba(52,211,153,0.12)', borderColor: 'rgba(52,211,153,0.35)', color: '#a7f3d0' }}>
-              Tu identidad ya está verificada. No necesitas enviar más documentos.
+            <div
+              className="zt-banner"
+              style={{
+                background: 'rgba(52,211,153,0.12)',
+                borderColor: 'rgba(52,211,153,0.35)',
+                color: '#a7f3d0',
+              }}
+            >
+              ✅ Tu identidad ya está verificada. No necesitas hacer nada más.
             </div>
           ) : (
             <>
-              <p className="zt-muted" style={{ marginTop: 16 }}>
-                Captura tu documento de identidad. El dorso y la selfie son opcionales pero mejoran
-                la verificación (liveness + face match).
-              </p>
+              {inProgress ? (
+                <>
+                  <div
+                    className="zt-banner"
+                    style={{
+                      background: 'rgba(251,191,36,0.10)',
+                      borderColor: 'rgba(251,191,36,0.30)',
+                      color: 'var(--zt-warning)',
+                    }}
+                  >
+                    Tu verificación está en proceso; desliza hacia abajo para actualizar.
+                  </div>
+                  <IonButton
+                    expand="block"
+                    fill="outline"
+                    style={{ marginTop: 12 }}
+                    onClick={() => statusQ.refetch()}
+                  >
+                    <IonIcon slot="start" icon={refreshOutline} />
+                    Actualizar estado
+                  </IonButton>
+                </>
+              ) : (
+                <>
+                  <p className="zt-muted" style={{ marginTop: 16 }}>
+                    Verifica tu identidad en unos minutos. Te pediremos tu documento y una selfie con
+                    detección de vida; todo se hace en una pantalla segura guiada.
+                  </p>
 
-              <IonItem className="zt-card" lines="none" style={{ marginTop: 12 }}>
-                <IonInput
-                  label="Nombre completo (opcional)"
-                  labelPlacement="stacked"
-                  value={fullName}
-                  onIonInput={(e) => setFullName(e.detail.value ?? '')}
-                  placeholder="Como aparece en tu documento"
-                />
-              </IonItem>
+                  <IonItem className="zt-card" lines="none" style={{ marginTop: 12 }}>
+                    <IonInput
+                      label="Nombre completo (opcional)"
+                      labelPlacement="stacked"
+                      value={fullName}
+                      onIonInput={(e) => setFullName(e.detail.value ?? '')}
+                      placeholder="Como aparece en tu documento"
+                    />
+                  </IonItem>
 
-              <ImageCapture
-                label="Documento (frente)"
-                required
-                hint="Foto nítida del frente de tu cédula/pasaporte."
-                value={front}
-                onChange={setFront}
-              />
-              <ImageCapture
-                label="Documento (dorso)"
-                hint="Opcional — reverso del documento."
-                value={back}
-                onChange={setBack}
-              />
-              <ImageCapture
-                label="Selfie"
-                hint="Opcional — habilita prueba de vida y comparación facial."
-                value={selfie}
-                onChange={setSelfie}
-              />
+                  <IonButton
+                    expand="block"
+                    style={{ marginTop: 18 }}
+                    disabled={sessionPending}
+                    onClick={startSession}
+                  >
+                    <IonIcon slot="start" icon={shieldCheckmarkOutline} />
+                    {sessionPending ? 'Abriendo…' : isRejected ? 'Reintentar verificación' : 'Verificar mi identidad'}
+                  </IonButton>
+                </>
+              )}
 
-              <IonButton
-                expand="block"
-                style={{ marginTop: 18 }}
-                disabled={!canSubmit}
-                onClick={submit}
+              {/* Opción secundaria: captura manual */}
+              <button
+                type="button"
+                className="zt-link-row"
+                onClick={() => setShowManual((v) => !v)}
+                style={{
+                  marginTop: 18,
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--zt-text-dim)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: 0,
+                  cursor: 'pointer',
+                  font: 'inherit',
+                }}
               >
-                <IonIcon slot="start" icon={shieldCheckmarkOutline} />
-                {verifyMut.isPending ? 'Verificando…' : 'Enviar para verificación'}
-              </IonButton>
+                <IonIcon
+                  icon={chevronDownOutline}
+                  style={{
+                    transition: 'transform .2s',
+                    transform: showManual ? 'rotate(180deg)' : 'none',
+                  }}
+                />
+                ¿Problemas con la cámara de Didit? Subir documentos manualmente
+              </button>
+
+              {showManual && (
+                <div style={{ marginTop: 12 }}>
+                  <p className="zt-muted">
+                    Captura tu documento de identidad. El dorso y la selfie son opcionales pero
+                    mejoran la verificación (liveness + face match).
+                  </p>
+
+                  <ImageCapture
+                    label="Documento (frente)"
+                    required
+                    hint="Foto nítida del frente de tu cédula/pasaporte."
+                    value={front}
+                    onChange={setFront}
+                  />
+                  <ImageCapture
+                    label="Documento (dorso)"
+                    hint="Opcional — reverso del documento."
+                    value={back}
+                    onChange={setBack}
+                  />
+                  <ImageCapture
+                    label="Selfie"
+                    hint="Opcional — habilita prueba de vida y comparación facial."
+                    value={selfie}
+                    onChange={setSelfie}
+                  />
+
+                  <IonButton
+                    expand="block"
+                    fill="outline"
+                    style={{ marginTop: 14 }}
+                    disabled={!canSubmitManual}
+                    onClick={submitManual}
+                  >
+                    <IonIcon slot="start" icon={documentTextOutline} />
+                    {verifyMut.isPending ? 'Verificando…' : 'Enviar documentos'}
+                  </IonButton>
+                </div>
+              )}
             </>
           )}
         </div>
