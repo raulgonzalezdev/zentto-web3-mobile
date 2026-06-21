@@ -1,6 +1,8 @@
 import { apiFetch, newIdempotencyKey } from './client';
 import type {
   CreateP2pOrderInput,
+  MarketRate,
+  P2pMessage,
   P2pOrder,
   P2pSide,
   P2pTrade,
@@ -54,12 +56,51 @@ export async function fetchP2pTrades(): Promise<P2pTrade[]> {
   return apiFetch<P2pTrade[]>('/p2p/trades');
 }
 
+/** Detalle de un trade (solo las partes). */
+export async function fetchP2pTrade(id: string): Promise<P2pTrade> {
+  return apiFetch<P2pTrade>(`/p2p/trades/${id}`);
+}
+
+/** Precio de referencia USDT/VES + banda permitida (anti-especulación). */
+export async function fetchMarketRate(): Promise<MarketRate> {
+  return apiFetch<MarketRate>('/p2p/market');
+}
+
 /** El VENDEDOR confirma fiat recibido → libera el cripto al comprador. */
 export async function confirmP2pTrade(id: string): Promise<{ ok: boolean }> {
   return apiFetch<{ ok: boolean }>(`/p2p/trades/${id}/confirm`, { method: 'POST' });
 }
 
+/** El COMPRADOR marca el fiat como pagado → inicia la ventana de liberación. */
+export async function markP2pTradePaid(id: string): Promise<{ ok: boolean }> {
+  return apiFetch<{ ok: boolean }>(`/p2p/trades/${id}/paid`, { method: 'POST' });
+}
+
+/** Abre una disputa del trade (la resuelve un árbitro del backoffice). */
+export async function disputeP2pTrade(id: string, reason: string): Promise<{ ok: boolean }> {
+  return apiFetch<{ ok: boolean }>(`/p2p/trades/${id}/dispute`, {
+    method: 'POST',
+    body: { reason },
+  });
+}
+
 /** Cancela un trade pendiente (libera el escrow). */
 export async function cancelP2pTrade(id: string): Promise<{ ok: boolean }> {
   return apiFetch<{ ok: boolean }>(`/p2p/trades/${id}/cancel`, { method: 'POST' });
+}
+
+/** Chat del trade (mensajes + evidencias de pago). */
+export async function fetchP2pMessages(id: string): Promise<P2pMessage[]> {
+  return apiFetch<P2pMessage[]>(`/p2p/trades/${id}/messages`);
+}
+
+/** Envía un mensaje y/o evidencia de pago (data URL imagen) al chat del trade. */
+export async function sendP2pMessage(
+  id: string,
+  input: { body?: string; attachment?: string },
+): Promise<P2pMessage> {
+  return apiFetch<P2pMessage>(`/p2p/trades/${id}/messages`, {
+    method: 'POST',
+    body: input,
+  });
 }

@@ -202,7 +202,34 @@ export interface EvmTx {
 
 export type P2pSide = 'buy' | 'sell';
 export type P2pOrderStatus = 'open' | 'taken' | 'cancelled' | string;
-export type P2pTradeStatus = 'pending' | 'completed' | 'cancelled' | string;
+export type P2pTradeStatus =
+  | 'pending'
+  | 'paid'
+  | 'completed'
+  | 'cancelled'
+  | 'disputed'
+  | 'expired'
+  | string;
+
+/** Referencia de mercado USDT/VES + banda anti-especulación permitida. */
+export interface MarketRate {
+  usdtVes: number | null;
+  source: string | null;
+  updatedAt: string | null;
+  bandPct: number;
+  min: number | null;
+  max: number | null;
+}
+
+/** Mensaje del chat de un trade. `attachment` es evidencia de pago (data URL imagen). */
+export interface P2pMessage {
+  id: string;
+  tradeId: string;
+  senderUserId: string;
+  body: string | null;
+  attachment: string | null;
+  createdAt: string | number;
+}
 
 /** Oferta del order book. `makerEmail` solo viene en el listado público. */
 export interface P2pOrder {
@@ -224,10 +251,18 @@ export interface P2pTrade {
   orderId: string;
   buyerUserId: string;
   sellerUserId: string;
+  buyerEmail?: string | null;
+  sellerEmail?: string | null;
   asset: string;
   amount: string;
   priceVes: string;
   status: P2pTradeStatus;
+  paidAt?: string | null;
+  paymentDeadline?: string | null;
+  releaseDeadline?: string | null;
+  disputeReason?: string | null;
+  disputeBy?: string | null;
+  resolution?: string | null;
   createdAt: string | number;
   [k: string]: unknown;
 }

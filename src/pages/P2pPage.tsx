@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import {
   IonButton,
   IonContent,
@@ -15,6 +16,7 @@ import {
   copyOutline,
   closeCircleOutline,
   checkmarkCircleOutline,
+  chatbubbleEllipsesOutline,
   storefrontOutline,
 } from 'ionicons/icons';
 import ZenttoHeader from '../components/ZenttoHeader';
@@ -45,14 +47,18 @@ const ORDER_STATUS: Record<string, { label: string; color: string }> = {
 };
 
 const TRADE_STATUS: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Pendiente', color: 'var(--zt-warning)' },
+  pending: { label: 'Esperando pago', color: 'var(--zt-warning)' },
+  paid: { label: 'Pago marcado', color: 'var(--zt-cyan)' },
   completed: { label: 'Completado', color: 'var(--zt-success)' },
   cancelled: { label: 'Cancelado', color: 'var(--zt-text-dim)' },
+  disputed: { label: 'En disputa', color: 'var(--zt-danger)' },
+  expired: { label: 'Expirado', color: 'var(--zt-text-dim)' },
 };
 
 export default function P2pPage() {
   const [present] = useIonToast();
   const { user } = useAuth();
+  const history = useHistory();
 
   const [tab, setTab] = useState<Tab>('book');
   // En el libro elijo qué quiero hacer YO: comprar muestra ofertas de venta y viceversa.
@@ -307,6 +313,7 @@ export default function P2pPage() {
                     cancelling={cancelTradeMut.isPending}
                     onConfirm={() => onConfirmTrade(t.id)}
                     onCancel={() => onCancelTrade(t.id)}
+                    onOpen={() => history.push(`/p2p/trade/${t.id}`)}
                   />
                 ))
               )}
@@ -390,6 +397,7 @@ function P2pTradeCard({
   cancelling,
   onConfirm,
   onCancel,
+  onOpen,
 }: {
   trade: P2pTrade;
   isSeller: boolean;
@@ -397,11 +405,18 @@ function P2pTradeCard({
   cancelling: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  onOpen: () => void;
 }) {
   const st = TRADE_STATUS[trade.status] ?? { label: trade.status, color: 'var(--zt-text-dim)' };
   const total = Number(trade.amount) * Number(trade.priceVes);
+  const active = trade.status === 'pending' || trade.status === 'paid' || trade.status === 'disputed';
   return (
-    <div className="zt-card">
+    <div
+      className="zt-card"
+      role="button"
+      onClick={onOpen}
+      style={{ cursor: 'pointer' }}
+    >
       <div className="zt-row" style={{ borderBottom: 'none' }}>
         <span className="zt-token">
           <span
@@ -429,7 +444,7 @@ function P2pTradeCard({
       <div className="zt-row" style={{ borderBottom: 'none' }}>
         <span className="zt-muted">{formatDate(trade.createdAt)}</span>
         {trade.status === 'pending' && (
-          <span style={{ display: 'flex', gap: 6 }}>
+          <span style={{ display: 'flex', gap: 6 }} onClick={(e) => e.stopPropagation()}>
             <IonButton
               fill="clear"
               size="small"
@@ -442,16 +457,17 @@ function P2pTradeCard({
             {isSeller && (
               <IonButton size="small" disabled={confirming} onClick={onConfirm}>
                 <IonIcon slot="start" icon={checkmarkCircleOutline} />
-                Confirmar pago
+                Confirmar
               </IonButton>
             )}
           </span>
         )}
       </div>
-      {trade.status === 'pending' && !isSeller && (
-        <p className="zt-muted" style={{ margin: '4px 0 0' }}>
-          Paga el fiat al vendedor por el método acordado. Cuando confirme, recibirás el cripto.
-        </p>
+      {active && (
+        <IonButton expand="block" fill="outline" size="small" style={{ marginTop: 8 }} onClick={(e) => { e.stopPropagation(); onOpen(); }}>
+          <IonIcon slot="start" icon={chatbubbleEllipsesOutline} />
+          Abrir chat y detalle
+        </IonButton>
       )}
     </div>
   );

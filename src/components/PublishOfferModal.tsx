@@ -17,9 +17,9 @@ import {
   IonToolbar,
   useIonToast,
 } from '@ionic/react';
-import { closeOutline } from 'ionicons/icons';
+import { closeOutline, trendingUpOutline } from 'ionicons/icons';
 import { useAccountBalance } from '../hooks/usePayments';
-import { useCreateP2pOrder } from '../hooks/useP2p';
+import { useCreateP2pOrder, useMarketRate } from '../hooks/useP2p';
 import { usePaymentMethods } from '../hooks/usePaymentMethods';
 import { paymentMethodToText } from '../lib/paymentMethod';
 import { formatAmount, formatVes } from '../lib/format';
@@ -47,6 +47,7 @@ export default function PublishOfferModal({
   const createMut = useCreateP2pOrder();
   const methods = usePaymentMethods();
   const balance = useAccountBalance();
+  const market = useMarketRate();
 
   const [side, setSide] = useState<P2pSide>('sell');
   const [asset, setAsset] = useState('USDT');
@@ -67,6 +68,12 @@ export default function PublishOfferModal({
   // Vender escrowa: el monto no puede superar el disponible.
   const overBalance = side === 'sell' && amountNum > available;
 
+  // Banda anti-especulación: el precio debe estar dentro del rango de mercado.
+  const rate = market.data;
+  const hasBand = !!rate && rate.min !== null && rate.max !== null;
+  const outOfBand =
+    hasBand && validPrice && (priceNum < (rate.min as number) || priceNum > (rate.max as number));
+
   const selectedMethod = useMemo(
     () => (methods.data ?? []).find((m) => m.id === methodId),
     [methods.data, methodId],
@@ -80,7 +87,8 @@ export default function PublishOfferModal({
         : '';
 
   const total = amountNum > 0 && priceNum > 0 ? amountNum * priceNum : 0;
-  const canPublish = validAmount && validPrice && !overBalance && !createMut.isPending;
+  const canPublish =
+    validAmount && validPrice && !overBalance && !outOfBand && !createMut.isPending;
 
   function reset() {
     setAmount('');
@@ -183,6 +191,26 @@ export default function PublishOfferModal({
             </p>
           )}
 
+          {rate?.usdtVes != null && (
+            <div
+              className="zt-row"
+              style={{ borderBottom: 'none', padding: '10px 4px 0', alignItems: 'center' }}
+            >
+              <span className="zt-muted" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <IonIcon icon={trendingUpOutline} style={{ color: 'var(--zt-cyan)' }} />
+                Mercado USDT/Bs.
+              </span>
+              <button
+                type="button"
+                className="zt-link"
+                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                onClick={() => setPriceVes(String(Math.round((rate.usdtVes as number) * 100) / 100))}
+              >
+                {formatVes(rate.usdtVes)} · usar
+              </button>
+            </div>
+          )}
+
           <IonItem className="zt-card" lines="none">
             <IonInput
               label="Precio por unidad (Bs.)"
@@ -194,6 +222,16 @@ export default function PublishOfferModal({
               placeholder="0.00"
             />
           </IonItem>
+          {hasBand && (
+            <p
+              className="zt-muted"
+              style={{ color: outOfBand ? 'var(--zt-danger)' : 'var(--zt-text-dim)', margin: '6px 4px' }}
+            >
+              {outOfBand
+                ? `Precio fuera de rango. Permitido entre ${formatVes(rate!.min)} y ${formatVes(rate!.max)} para evitar especulación.`
+                : `Rango permitido: ${formatVes(rate!.min)} – ${formatVes(rate!.max)} (±${Math.round(rate!.bandPct * 100)}%).`}
+            </p>
+          )}
 
           <IonItem className="zt-card" lines="none">
             <IonSelect
