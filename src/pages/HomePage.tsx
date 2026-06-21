@@ -5,7 +5,6 @@ import {
   IonPage,
   IonRefresher,
   IonRefresherContent,
-  IonSpinner,
   useIonToast,
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
@@ -17,10 +16,13 @@ import {
   walletOutline,
 } from 'ionicons/icons';
 import ZenttoHeader from '../components/ZenttoHeader';
+import { BalanceSkeleton, ListSkeleton } from '../components/Skeletons';
 import { useEvmInfo, isEvmUnavailable } from '../hooks/useEvm';
 import { useAccountBalance, useCredit } from '../hooks/usePayments';
 import { useAuth } from '../auth/AuthContext';
+import { useCountUp } from '../hooks/useCountUp';
 import { formatAmount } from '../lib/format';
+import { tapLight, notifySuccess, notifyError } from '../lib/haptics';
 import type { AccountBalance } from '../api/types';
 
 // Asset principal mostrado en grande. Si no hay saldo aún, se usa USDT.
@@ -46,6 +48,11 @@ export default function HomePage() {
     balances.find((b) => b.asset?.toUpperCase() === PRIMARY_ASSET) ?? balances[0];
   const others = balances.filter((b) => b !== primary);
 
+  const loadingBalance = balance.isLoading && !balance.data;
+  const primaryAmount = Number(primary?.available ?? 0);
+  // Count-up del saldo: anima al objetivo cuando ya tenemos datos.
+  const animated = useCountUp(primaryAmount, !loadingBalance && !!primary);
+
   const evmDown = info.isError && isEvmUnavailable(info.error);
   const netLabel = evmDown
     ? 'Red no disponible'
@@ -55,15 +62,23 @@ export default function HomePage() {
         }`
       : 'Conectando a la red…';
 
+  function go(path: string) {
+    tapLight();
+    history.push(path);
+  }
+
   async function handleFaucet() {
+    tapLight();
     try {
       await creditMut.mutateAsync({ asset: FAUCET_ASSET, amount: FAUCET_AMOUNT });
+      notifySuccess();
       present({
         message: `+${FAUCET_AMOUNT} ${FAUCET_ASSET} acreditados`,
         duration: 1600,
         color: 'success',
       });
     } catch {
+      notifyError();
       present({
         message: 'No se pudo obtener saldo de prueba',
         duration: 1800,
@@ -79,6 +94,7 @@ export default function HomePage() {
         <IonRefresher
           slot="fixed"
           onIonRefresh={async (e) => {
+            tapLight();
             await Promise.all([balance.refetch(), info.refetch()]);
             e.detail.complete();
           }}
@@ -88,7 +104,7 @@ export default function HomePage() {
 
         <div className="zt-screen">
           {/* Tarjeta de cuenta — saldo real del ledger */}
-          <div className="zt-balance-card">
+          <div className="zt-balance-card zt-enter">
             <span className="zt-chip-net">
               <span className={`zt-dot${evmDown ? ' off' : ''}`} />
               {netLabel}
@@ -97,10 +113,10 @@ export default function HomePage() {
               {primary ? `${primary.asset} disponible` : 'Saldo disponible'}
             </div>
             <div className="zt-balance-amount">
-              {balance.isLoading && !balance.data ? (
-                <IonSpinner name="dots" />
+              {loadingBalance ? (
+                <BalanceSkeleton />
               ) : primary ? (
-                `${assetSymbol(primary.asset)}${formatAmount(primary.available)}`
+                `${assetSymbol(primary.asset)}${formatAmount(animated)}`
               ) : (
                 '₮0.00'
               )}
@@ -110,25 +126,30 @@ export default function HomePage() {
             </div>
 
             <div className="zt-quick">
-              <button className="zt-quick-item" type="button" onClick={() => history.push('/send')}>
+              <button className="zt-quick-item" type="button" onClick={() => go('/send')}>
                 <span className="zt-quick-ic">
                   <IonIcon icon={paperPlaneOutline} />
                 </span>
                 <span className="zt-quick-label">Enviar</span>
               </button>
-              <button className="zt-quick-item" type="button" onClick={() => history.push('/receive')}>
+              <button className="zt-quick-item" type="button" onClick={() => go('/receive')}>
                 <span className="zt-quick-ic">
                   <IonIcon icon={qrCodeOutline} />
                 </span>
                 <span className="zt-quick-label">Recibir</span>
               </button>
-              <button className="zt-quick-item" type="button" onClick={() => history.push('/movements')}>
+              <button className="zt-quick-item" type="button" onClick={() => go('/movements')}>
                 <span className="zt-quick-ic">
                   <IonIcon icon={swapHorizontalOutline} />
                 </span>
                 <span className="zt-quick-label">Historial</span>
               </button>
-              <button className="zt-quick-item" type="button" onClick={handleFaucet} disabled={creditMut.isPending}>
+              <button
+                className="zt-quick-item"
+                type="button"
+                onClick={handleFaucet}
+                disabled={creditMut.isPending}
+              >
                 <span className="zt-quick-ic">
                   <IonIcon icon={addCircleOutline} />
                 </span>
@@ -137,54 +158,58 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Faucet dev */}
-          <IonButton
-            expand="block"
-            fill="outline"
-            style={{ marginTop: 16 }}
-            disabled={creditMut.isPending}
-            onClick={handleFaucet}
-          >
-            <IonIcon slot="start" icon={addCircleOutline} />
-            {creditMut.isPending ? 'Acreditando…' : `Obtener saldo de prueba (${FAUCET_AMOUNT} ${FAUCET_ASSET})`}
-          </IonButton>
-
           {/* Lista de activos del ledger */}
-          <div className="zt-card">
-            <div className="zt-row" style={{ borderBottom: 'none', paddingBottom: 4 }}>
-              <h3 style={{ margin: 0 }}>Mis activos</h3>
-              <span className="zt-muted">disponible</span>
-            </div>
-
-            {balance.isError ? (
-              <p className="zt-muted" style={{ color: 'var(--zt-danger)' }}>
-                No se pudo cargar tu saldo. Desliza para reintentar.
-              </p>
-            ) : balances.length === 0 ? (
-              <div className="zt-empty" style={{ padding: '24px 8px' }}>
-                <IonIcon icon={walletOutline} />
-                <p>Aún no tienes saldo. Usa el faucet de prueba para empezar.</p>
-              </div>
-            ) : (
-              <>
-                {primary && <AssetRow b={primary} />}
-                {others.map((b) => (
-                  <AssetRow key={b.asset} b={b} />
-                ))}
-              </>
-            )}
+          <div className="zt-section-head">
+            <h3>Mis activos</h3>
+            <span className="zt-muted">disponible</span>
           </div>
 
+          {loadingBalance ? (
+            <ListSkeleton rows={2} />
+          ) : balance.isError ? (
+            <div className="zt-card zt-enter">
+              <p className="zt-muted" style={{ color: 'var(--zt-danger)', margin: 0 }}>
+                No se pudo cargar tu saldo. Desliza hacia abajo para reintentar.
+              </p>
+            </div>
+          ) : balances.length === 0 ? (
+            <div className="zt-card zt-enter">
+              <div className="zt-empty" style={{ padding: '24px 8px' }}>
+                <IonIcon icon={walletOutline} />
+                <p>Aún no tienes saldo. Toca "Recargar" para obtener saldo de prueba y empezar.</p>
+                <IonButton
+                  size="small"
+                  fill="outline"
+                  style={{ marginTop: 12 }}
+                  disabled={creditMut.isPending}
+                  onClick={handleFaucet}
+                >
+                  <IonIcon slot="start" icon={addCircleOutline} />
+                  {creditMut.isPending ? 'Acreditando…' : `Obtener ${FAUCET_AMOUNT} ${FAUCET_ASSET}`}
+                </IonButton>
+              </div>
+            </div>
+          ) : (
+            <div className="zt-card zt-stagger">
+              {primary && <AssetRow b={primary} />}
+              {others.map((b) => (
+                <AssetRow key={b.asset} b={b} />
+              ))}
+            </div>
+          )}
+
           {/* Acceso a movimientos */}
-          <IonButton
-            expand="block"
-            fill="clear"
-            style={{ marginTop: 8 }}
-            onClick={() => history.push('/movements')}
-          >
-            <IonIcon slot="start" icon={swapHorizontalOutline} />
-            Ver historial
-          </IonButton>
+          {balances.length > 0 && (
+            <IonButton
+              expand="block"
+              fill="clear"
+              style={{ marginTop: 8 }}
+              onClick={() => go('/movements')}
+            >
+              <IonIcon slot="start" icon={swapHorizontalOutline} />
+              Ver historial
+            </IonButton>
+          )}
         </div>
       </IonContent>
     </IonPage>

@@ -4,6 +4,7 @@ import PinPad from './PinPad';
 import { useLock } from '../auth/LockContext';
 import { isBiometricAvailable, verifyBiometric } from '../lib/biometric';
 import { verifyPin } from '../lib/pinLock';
+import { notifySuccess, notifyError } from '../lib/haptics';
 
 /**
  * Pantalla de bloqueo: exige PIN (con opción de huella si el usuario la activó).
@@ -25,7 +26,10 @@ export default function LockScreen() {
 
   const tryBiometric = useCallback(async () => {
     const ok = await verifyBiometric('Desbloquea Zentto con tu huella');
-    if (ok) unlock();
+    if (ok) {
+      notifySuccess();
+      unlock();
+    }
   }, [unlock]);
 
   // Auto-lanzar el prompt de huella al abrir, si está disponible.
@@ -40,9 +44,11 @@ export default function LockScreen() {
     if (next.length >= 4) {
       const ok = await verifyPin(next);
       if (ok) {
+        notifySuccess();
         unlock();
       } else if (next.length >= 6) {
         // longitud máxima sin acierto → limpiar y marcar error
+        notifyError();
         setError(true);
         setPin('');
       }

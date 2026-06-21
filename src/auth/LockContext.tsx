@@ -40,16 +40,25 @@ export const LockProvider: React.FC<{ children: React.ReactNode }> = ({ children
     pinEnabledRef.current = pin;
   }, []);
 
-  // Config inicial: si hay PIN, arrancamos bloqueados.
+  // Config inicial: si hay PIN, arrancamos bloqueados. A PRUEBA DE FALLOS:
+  // `ready` SIEMPRE termina en true (aunque el storage falle o cuelgue) para no
+  // dejar la app en pantalla negra. Timeout de seguridad de 2s.
   useEffect(() => {
-    (async () => {
-      const [pin, bio] = await Promise.all([isPinSet(), isBiometricEnabled()]);
+    let done = false;
+    const finish = (pin: boolean, bio: boolean) => {
+      if (done) return;
+      done = true;
       setPinEnabled(pin);
       setBiometricEnabled(bio);
       pinEnabledRef.current = pin;
       setLocked(pin);
       setReady(true);
-    })();
+    };
+    Promise.all([isPinSet(), isBiometricEnabled()])
+      .then(([pin, bio]) => finish(pin, bio))
+      .catch(() => finish(false, false));
+    const t = setTimeout(() => finish(false, false), 2000);
+    return () => clearTimeout(t);
   }, []);
 
   // Al reanudar la app (volver del background), re-bloquear si hay PIN.

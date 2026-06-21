@@ -17,6 +17,7 @@ import {
 import ZenttoHeader from '../components/ZenttoHeader';
 import { useSetupTotp, useEnableTotp } from '../hooks/useSecurity';
 import { useAuth } from '../auth/AuthContext';
+import { tapLight, notifySuccess, notifyError } from '../lib/haptics';
 import { ApiError } from '../api/client';
 import type { TotpSetup } from '../api/types';
 
@@ -46,13 +47,16 @@ export default function SecurityPage() {
 
   async function confirmEnable() {
     if (!validCode) return;
+    tapLight();
     try {
       await enableMut.mutateAsync(code.trim());
+      notifySuccess();
       present({ message: '2FA activado', duration: 1800, color: 'success' });
       setSetup(null);
       setCode('');
       await refreshMe();
     } catch (err) {
+      notifyError();
       const msg = err instanceof ApiError ? err.message : 'Código inválido';
       present({ message: msg, duration: 2200, color: 'danger' });
     }

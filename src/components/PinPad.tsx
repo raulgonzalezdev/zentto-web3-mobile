@@ -1,5 +1,6 @@
 import { IonIcon } from '@ionic/react';
 import { backspaceOutline, fingerPrintOutline } from 'ionicons/icons';
+import { tapLight } from '../lib/haptics';
 
 /**
  * Teclado numérico para PIN. `length` muestra los puntos llenos según `value`.
@@ -22,9 +23,11 @@ export default function PinPad({
 }) {
   function press(d: string) {
     if (value.length >= max) return;
+    tapLight();
     onChange(value + d);
   }
   function back() {
+    tapLight();
     onChange(value.slice(0, -1));
   }
 

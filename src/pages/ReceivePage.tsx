@@ -3,7 +3,6 @@ import {
   IonContent,
   IonIcon,
   IonPage,
-  IonSpinner,
   useIonToast,
 } from '@ionic/react';
 import {
@@ -11,12 +10,16 @@ import {
   qrCodeOutline,
   openOutline,
   downloadOutline,
+  shareSocialOutline,
 } from 'ionicons/icons';
 import ZenttoHeader from '../components/ZenttoHeader';
 import QrCode from '../components/QrCode';
+import { CardSkeleton, ListSkeleton } from '../components/Skeletons';
 import { useDepositInfo, useDeposits } from '../hooks/usePayments';
 import { useAuth } from '../auth/AuthContext';
 import { formatAmount } from '../lib/format';
+import { shareOrCopy } from '../lib/share';
+import { tapLight, notifySuccess } from '../lib/haptics';
 import type { ChainDeposit } from '../api/types';
 
 function shortHash(h?: string): string {
@@ -31,11 +34,24 @@ export default function ReceivePage() {
   const deposits = useDeposits();
 
   async function copyText(text: string, label: string) {
+    tapLight();
     try {
       await navigator.clipboard.writeText(text);
+      notifySuccess();
       present({ message: `${label} copiado`, duration: 1400, color: 'success' });
     } catch {
       present({ message: 'No se pudo copiar', duration: 1400, color: 'danger' });
+    }
+  }
+
+  async function share(text: string, title: string) {
+    tapLight();
+    const r = await shareOrCopy({ title, text, dialogTitle: title });
+    if (r === 'copied') {
+      notifySuccess();
+      present({ message: 'Copiado al portapapeles', duration: 1400, color: 'success' });
+    } else if (r === 'failed') {
+      present({ message: 'No se pudo compartir', duration: 1400, color: 'danger' });
     }
   }
 
@@ -67,18 +83,32 @@ export default function ReceivePage() {
                 Comparte tu email: la transferencia llega al instante.
               </p>
               <p className="zt-mono">{user.email}</p>
-              <IonButton expand="block" fill="outline" onClick={() => copyText(user.email, 'Email')}>
-                <IonIcon slot="start" icon={copyOutline} />
-                Copiar email
-              </IonButton>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <IonButton
+                  expand="block"
+                  fill="outline"
+                  style={{ flex: 1 }}
+                  onClick={() => copyText(user.email, 'Email')}
+                >
+                  <IonIcon slot="start" icon={copyOutline} />
+                  Copiar
+                </IonButton>
+                <IonButton
+                  expand="block"
+                  fill="outline"
+                  style={{ flex: 1 }}
+                  onClick={() => share(user.email, 'Mi correo Zentto')}
+                >
+                  <IonIcon slot="start" icon={shareSocialOutline} />
+                  Compartir
+                </IonButton>
+              </div>
             </div>
           )}
 
           {/* Dirección de depósito on-chain real */}
           {depositInfo.isLoading ? (
-            <div style={{ textAlign: 'center', padding: 28 }}>
-              <IonSpinner name="crescent" />
-            </div>
+            <CardSkeleton lines={3} />
           ) : depositInfo.isError || !info ? (
             <div className="zt-empty">
               <IonIcon icon={qrCodeOutline} />
@@ -96,14 +126,28 @@ export default function ReceivePage() {
               <div className="zt-card">
                 <h3>Dirección de depósito ({info.asset} · USDC)</h3>
                 <p className="zt-mono">{info.address}</p>
-                <IonButton
-                  expand="block"
-                  fill="outline"
-                  onClick={() => copyText(info.address, 'Dirección')}
-                >
-                  <IonIcon slot="start" icon={copyOutline} />
-                  Copiar dirección
-                </IonButton>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <IonButton
+                    expand="block"
+                    fill="outline"
+                    style={{ flex: 1 }}
+                    onClick={() => copyText(info.address, 'Dirección')}
+                  >
+                    <IonIcon slot="start" icon={copyOutline} />
+                    Copiar
+                  </IonButton>
+                  <IonButton
+                    expand="block"
+                    fill="outline"
+                    style={{ flex: 1 }}
+                    onClick={() =>
+                      share(info.address, `Mi dirección de depósito (${info.asset} · ${info.chainName})`)
+                    }
+                  >
+                    <IonIcon slot="start" icon={shareSocialOutline} />
+                    Compartir
+                  </IonButton>
+                </div>
                 <IonButton
                   expand="block"
                   fill="clear"
@@ -126,8 +170,8 @@ export default function ReceivePage() {
             </div>
 
             {deposits.isLoading && !deposits.data ? (
-              <div style={{ textAlign: 'center', padding: 16 }}>
-                <IonSpinner name="dots" />
+              <div style={{ padding: '4px 0' }}>
+                <ListSkeleton rows={2} />
               </div>
             ) : items.length === 0 ? (
               <div className="zt-empty" style={{ padding: '24px 8px' }}>

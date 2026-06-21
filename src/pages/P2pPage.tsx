@@ -7,7 +7,6 @@ import {
   IonSegment,
   IonSegmentButton,
   IonLabel,
-  IonSpinner,
   useIonToast,
 } from '@ionic/react';
 import {
@@ -20,6 +19,7 @@ import {
 } from 'ionicons/icons';
 import ZenttoHeader from '../components/ZenttoHeader';
 import PublishOfferModal from '../components/PublishOfferModal';
+import { CardSkeleton } from '../components/Skeletons';
 import {
   useCancelP2pOrder,
   useCancelP2pTrade,
@@ -33,6 +33,7 @@ import { useAuth } from '../auth/AuthContext';
 import { ApiError } from '../api/client';
 import { formatAmount, formatDate, formatVes, shortenAddress } from '../lib/format';
 import { copyText } from '../lib/clipboard';
+import { tapLight, selection, notifySuccess, notifyError } from '../lib/haptics';
 import type { P2pOrder, P2pSide, P2pTrade } from '../api/types';
 
 type Tab = 'book' | 'mine' | 'trades';
@@ -85,38 +86,50 @@ export default function P2pPage() {
   }
 
   async function onTake(order: P2pOrder) {
+    tapLight();
     try {
       await takeMut.mutateAsync(order.id);
+      notifySuccess();
       present({ message: 'Oferta tomada. Revisa "Mis trades".', duration: 2000, color: 'success' });
       setTab('trades');
     } catch (err) {
+      notifyError();
       present({ message: errMsg(err, 'No se pudo tomar la oferta'), duration: 2400, color: 'danger' });
     }
   }
 
   async function onCancelOrder(id: string) {
+    tapLight();
     try {
       await cancelOrderMut.mutateAsync(id);
+      notifySuccess();
       present({ message: 'Oferta cancelada', duration: 1600, color: 'success' });
     } catch (err) {
+      notifyError();
       present({ message: errMsg(err, 'No se pudo cancelar'), duration: 2200, color: 'danger' });
     }
   }
 
   async function onConfirmTrade(id: string) {
+    tapLight();
     try {
       await confirmTradeMut.mutateAsync(id);
+      notifySuccess();
       present({ message: 'Pago confirmado. Cripto liberado.', duration: 2000, color: 'success' });
     } catch (err) {
+      notifyError();
       present({ message: errMsg(err, 'No se pudo confirmar'), duration: 2400, color: 'danger' });
     }
   }
 
   async function onCancelTrade(id: string) {
+    tapLight();
     try {
       await cancelTradeMut.mutateAsync(id);
+      notifySuccess();
       present({ message: 'Trade cancelado', duration: 1600, color: 'success' });
     } catch (err) {
+      notifyError();
       present({ message: errMsg(err, 'No se pudo cancelar el trade'), duration: 2200, color: 'danger' });
     }
   }
@@ -126,7 +139,13 @@ export default function P2pPage() {
       <ZenttoHeader title="P2P" />
       <IonContent className="zt-page" fullscreen>
         <div className="zt-screen">
-          <IonSegment value={tab} onIonChange={(e) => setTab((e.detail.value as Tab) ?? 'book')}>
+          <IonSegment
+            value={tab}
+            onIonChange={(e) => {
+              selection();
+              setTab((e.detail.value as Tab) ?? 'book');
+            }}
+          >
             <IonSegmentButton value="book">
               <IonLabel>Mercado</IonLabel>
             </IonSegmentButton>
@@ -144,7 +163,10 @@ export default function P2pPage() {
               <div style={{ marginTop: 14 }}>
                 <IonSegment
                   value={intent}
-                  onIonChange={(e) => setIntent((e.detail.value as 'buy' | 'sell') ?? 'buy')}
+                  onIonChange={(e) => {
+                    selection();
+                    setIntent((e.detail.value as 'buy' | 'sell') ?? 'buy');
+                  }}
                 >
                   <IonSegmentButton value="buy">
                     <IonLabel>Comprar</IonLabel>
@@ -155,7 +177,7 @@ export default function P2pPage() {
                 </IonSegment>
               </div>
 
-              <IonButton expand="block" fill="outline" style={{ marginTop: 14 }} onClick={() => setShowPublish(true)}>
+              <IonButton expand="block" fill="outline" style={{ marginTop: 14 }} onClick={() => { tapLight(); setShowPublish(true); }}>
                 <IonIcon slot="start" icon={addCircleOutline} />
                 Publicar oferta
               </IonButton>
@@ -167,11 +189,12 @@ export default function P2pPage() {
               </p>
 
               {book.isLoading && !book.data ? (
-                <div style={{ textAlign: 'center', padding: 28 }}>
-                  <IonSpinner name="crescent" />
+                <div style={{ marginTop: 14 }}>
+                  <CardSkeleton lines={3} />
+                  <CardSkeleton lines={3} />
                 </div>
               ) : offers.length === 0 ? (
-                <div className="zt-empty">
+                <div className="zt-empty zt-enter">
                   <IonIcon icon={storefrontOutline} />
                   <p>No hay ofertas {intent === 'buy' ? 'de venta' : 'de compra'} por ahora.</p>
                 </div>
@@ -193,19 +216,20 @@ export default function P2pPage() {
           {/* ─────────────── Mis órdenes ─────────────── */}
           {tab === 'mine' && (
             <>
-              <IonButton expand="block" style={{ marginTop: 14 }} onClick={() => setShowPublish(true)}>
+              <IonButton expand="block" style={{ marginTop: 14 }} onClick={() => { tapLight(); setShowPublish(true); }}>
                 <IonIcon slot="start" icon={addCircleOutline} />
                 Publicar oferta
               </IonButton>
 
               {mine.isLoading && !mine.data ? (
-                <div style={{ textAlign: 'center', padding: 28 }}>
-                  <IonSpinner name="crescent" />
+                <div style={{ marginTop: 14 }}>
+                  <CardSkeleton lines={2} />
+                  <CardSkeleton lines={2} />
                 </div>
               ) : (mine.data ?? []).length === 0 ? (
-                <div className="zt-empty">
+                <div className="zt-empty zt-enter">
                   <IonIcon icon={swapHorizontalOutline} />
-                  <p>No tienes ofertas publicadas.</p>
+                  <p>No tienes ofertas publicadas. Publica una para vender o comprar cripto.</p>
                 </div>
               ) : (
                 (mine.data ?? []).map((o) => {
@@ -264,13 +288,14 @@ export default function P2pPage() {
           {tab === 'trades' && (
             <>
               {trades.isLoading && !trades.data ? (
-                <div style={{ textAlign: 'center', padding: 28 }}>
-                  <IonSpinner name="crescent" />
+                <div style={{ marginTop: 14 }}>
+                  <CardSkeleton lines={3} />
+                  <CardSkeleton lines={3} />
                 </div>
               ) : (trades.data ?? []).length === 0 ? (
-                <div className="zt-empty">
+                <div className="zt-empty zt-enter">
                   <IonIcon icon={swapHorizontalOutline} />
-                  <p>No tienes trades todavía.</p>
+                  <p>No tienes trades todavía. Toma una oferta del mercado para empezar.</p>
                 </div>
               ) : (
                 (trades.data ?? []).map((t) => (

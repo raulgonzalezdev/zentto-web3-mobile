@@ -27,6 +27,7 @@ import { useAccountBalance, useTransfer, useWithdraw } from '../hooks/usePayment
 import { useAuth } from '../auth/AuthContext';
 import { ApiError } from '../api/client';
 import { formatAmount } from '../lib/format';
+import { tapLight, selection, notifySuccess, notifyError } from '../lib/haptics';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const EVM_ADDR_RE = /^0x[0-9a-fA-F]{40}$/;
@@ -86,6 +87,7 @@ export default function SendPage() {
 
   async function handleSend() {
     if (!canTransfer) return;
+    tapLight();
     try {
       await transferMut.mutateAsync({
         toEmail: toEmail.trim(),
@@ -93,10 +95,12 @@ export default function SendPage() {
         amount: amount.trim(),
       });
       setDone({ to: toEmail.trim(), asset: effectiveAsset, amount: amount.trim() });
+      notifySuccess();
       present({ message: 'Transferencia enviada', duration: 1600, color: 'success' });
       setToEmail('');
       setAmount('');
     } catch (err) {
+      notifyError();
       const msg = err instanceof ApiError ? err.message : 'No se pudo completar la transferencia';
       present({ message: msg, duration: 2200, color: 'danger' });
     }
@@ -109,6 +113,7 @@ export default function SendPage() {
       return;
     }
     if (!canWithdraw) return;
+    tapLight();
     try {
       await withdrawMut.mutateAsync({
         asset: 'USDC',
@@ -117,10 +122,12 @@ export default function SendPage() {
         totpCode: totp.trim(),
       });
       setWDone(true);
+      notifySuccess();
       present({ message: 'Retiro en proceso', duration: 1800, color: 'success' });
       setWAmount('');
       setTotp('');
     } catch (err) {
+      notifyError();
       const msg = err instanceof ApiError ? err.message : 'No se pudo completar el retiro';
       present({ message: msg, duration: 2600, color: 'danger' });
     }
@@ -133,7 +140,10 @@ export default function SendPage() {
         <div className="zt-screen">
           <IonSegment
             value={mode}
-            onIonChange={(e) => setMode((e.detail.value as Mode) ?? 'transfer')}
+            onIonChange={(e) => {
+              selection();
+              setMode((e.detail.value as Mode) ?? 'transfer');
+            }}
           >
             <IonSegmentButton value="transfer">
               <IonLabel>Transferir</IonLabel>

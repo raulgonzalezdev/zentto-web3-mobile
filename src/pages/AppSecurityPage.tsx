@@ -19,6 +19,7 @@ import ZenttoHeader from '../components/ZenttoHeader';
 import PinPad from '../components/PinPad';
 import { useLock } from '../auth/LockContext';
 import { isBiometricAvailable, verifyBiometric } from '../lib/biometric';
+import { notifySuccess, notifyError, notifyWarning } from '../lib/haptics';
 import {
   clearPin,
   isValidPinFormat,
@@ -77,11 +78,13 @@ export default function AppSecurityPage() {
       if (next === first) {
         await setPin(next);
         await refreshLock();
+        notifySuccess();
         present({ message: 'PIN configurado', duration: 1600, color: 'success' });
         setStep('idle');
         setPinValue('');
         setFirst('');
       } else {
+        notifyError();
         present({ message: 'Los PIN no coinciden', duration: 1800, color: 'danger' });
         setPinValue('');
       }
@@ -91,23 +94,27 @@ export default function AppSecurityPage() {
   async function disablePin() {
     await clearPin();
     await refreshLock();
+    notifySuccess();
     present({ message: 'PIN desactivado', duration: 1600, color: 'success' });
   }
 
   async function toggleBiometric(on: boolean) {
     if (on) {
       if (!pinEnabled) {
+        notifyWarning();
         present({ message: 'Primero crea un PIN', duration: 1800, color: 'warning' });
         return;
       }
       const ok = await verifyBiometric('Confirma tu huella para activarla');
       if (!ok) {
+        notifyError();
         present({ message: 'No se pudo verificar la huella', duration: 1800, color: 'danger' });
         return;
       }
     }
     await setBiometricEnabled(on);
     await refreshLock();
+    notifySuccess();
     present({ message: on ? 'Huella activada' : 'Huella desactivada', duration: 1400, color: 'success' });
   }
 

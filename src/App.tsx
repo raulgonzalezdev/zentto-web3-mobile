@@ -22,6 +22,7 @@ import SettingsMenu from './components/SettingsMenu';
 import LockScreen from './components/LockScreen';
 import { useAuth } from './auth/AuthContext';
 import { useLock } from './auth/LockContext';
+import { selection } from './lib/haptics';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/HomePage';
@@ -115,23 +116,23 @@ export default function App() {
           </IonRouterOutlet>
 
           <IonTabBar slot="bottom" className="zt-tabbar">
-            <IonTabButton tab="home" href="/home">
+            <IonTabButton tab="home" href="/home" onClick={() => selection()}>
               <IonIcon icon={homeOutline} />
               <IonLabel>Inicio</IonLabel>
             </IonTabButton>
-            <IonTabButton tab="send" href="/send">
+            <IonTabButton tab="send" href="/send" onClick={() => selection()}>
               <IonIcon icon={paperPlaneOutline} />
               <IonLabel>Enviar</IonLabel>
             </IonTabButton>
-            <IonTabButton tab="receive" href="/receive">
+            <IonTabButton tab="receive" href="/receive" onClick={() => selection()}>
               <IonIcon icon={qrCodeOutline} />
               <IonLabel>Recibir</IonLabel>
             </IonTabButton>
-            <IonTabButton tab="p2p" href="/p2p">
+            <IonTabButton tab="p2p" href="/p2p" onClick={() => selection()}>
               <IonIcon icon={swapHorizontalOutline} />
               <IonLabel>P2P</IonLabel>
             </IonTabButton>
-            <IonTabButton tab="movements" href="/movements">
+            <IonTabButton tab="movements" href="/movements" onClick={() => selection()}>
               <IonIcon icon={timeOutline} />
               <IonLabel>Historial</IonLabel>
             </IonTabButton>

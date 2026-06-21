@@ -58,7 +58,7 @@ export default function LoginPage() {
     <IonPage>
       <IonContent className="zt-page" fullscreen>
         <div className="zt-screen">
-          <div className="zt-brand">
+          <div className="zt-brand zt-enter">
             <div className="zt-logo">Z</div>
             <h1>Zentto</h1>
             <p>Tu neobanco cripto. Saldos en USD, respaldo en testnet real.</p>

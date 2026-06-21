@@ -12,7 +12,6 @@ import {
   IonPage,
   IonSegment,
   IonSegmentButton,
-  IonSpinner,
   IonTitle,
   IonToolbar,
   useIonToast,
@@ -31,8 +30,10 @@ import {
   useDeletePaymentMethod,
   usePaymentMethods,
 } from '../hooks/usePaymentMethods';
+import { CardSkeleton } from '../components/Skeletons';
 import { paymentMethodFields, paymentMethodTypeLabel } from '../lib/paymentMethod';
 import { copyText } from '../lib/clipboard';
+import { tapLight, selection, notifySuccess, notifyError } from '../lib/haptics';
 import { ApiError } from '../api/client';
 import type { PaymentMethodType } from '../api/types';
 
@@ -50,10 +51,13 @@ export default function PaymentMethodsPage() {
   }
 
   async function onDelete(id: string) {
+    tapLight();
     try {
       await deleteMut.mutateAsync(id);
+      notifySuccess();
       present({ message: 'Método eliminado', duration: 1400, color: 'success' });
     } catch (err) {
+      notifyError();
       const msg = err instanceof ApiError ? err.message : 'No se pudo eliminar';
       present({ message: msg, duration: 2000, color: 'danger' });
     }
@@ -71,22 +75,24 @@ export default function PaymentMethodsPage() {
             para que la contraparte los copie sin errores.
           </p>
 
-          <IonButton expand="block" style={{ marginTop: 12 }} onClick={() => setShowAdd(true)}>
+          <IonButton expand="block" style={{ marginTop: 12 }} onClick={() => { tapLight(); setShowAdd(true); }}>
             <IonIcon slot="start" icon={addOutline} />
             Agregar método
           </IonButton>
 
           {list.isLoading && !list.data ? (
-            <div style={{ textAlign: 'center', padding: 28 }}>
-              <IonSpinner name="crescent" />
+            <div style={{ marginTop: 4 }}>
+              <CardSkeleton lines={2} />
+              <CardSkeleton lines={2} />
             </div>
           ) : items.length === 0 ? (
-            <div className="zt-empty">
+            <div className="zt-empty zt-enter">
               <IonIcon icon={cardOutline} />
-              <p>Aún no tienes métodos de cobro.</p>
+              <p>Aún no tienes métodos de cobro. Agrega uno para usarlo en tus ofertas P2P.</p>
             </div>
           ) : (
-            items.map((m) => (
+            <div className="zt-stagger">
+            {items.map((m) => (
               <div className="zt-card" key={m.id}>
                 <div className="zt-row" style={{ borderBottom: 'none' }}>
                   <span className="zt-token">
@@ -126,7 +132,8 @@ export default function PaymentMethodsPage() {
                   </div>
                 ))}
               </div>
-            ))
+            ))}
+            </div>
           )}
         </div>
 
@@ -136,9 +143,11 @@ export default function PaymentMethodsPage() {
           onCreate={async (input) => {
             try {
               await createMut.mutateAsync(input);
+              notifySuccess();
               present({ message: 'Método agregado', duration: 1400, color: 'success' });
               setShowAdd(false);
             } catch (err) {
+              notifyError();
               const msg = err instanceof ApiError ? err.message : 'No se pudo guardar';
               present({ message: msg, duration: 2200, color: 'danger' });
             }
@@ -212,7 +221,10 @@ function AddPaymentMethodModal({
         <div className="zt-screen">
           <IonSegment
             value={type}
-            onIonChange={(e) => setType((e.detail.value as PaymentMethodType) ?? 'pago_movil')}
+            onIonChange={(e) => {
+              selection();
+              setType((e.detail.value as PaymentMethodType) ?? 'pago_movil');
+            }}
           >
             <IonSegmentButton value="pago_movil">
               <IonLabel>Pago Móvil</IonLabel>

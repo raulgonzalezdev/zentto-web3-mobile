@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { fetchMe, logout as apiLogout } from '../api/auth';
+import { registerForPush } from '../lib/push';
 import type { User } from '../api/types';
 
 interface AuthState {
@@ -50,6 +51,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       active = false;
     };
   }, []);
+
+  // Registrar push tras tener sesión (idempotente; no-op en web; tolerante a
+  // falta de config FCM). No envía el token a ningún endpoint todavía.
+  useEffect(() => {
+    if (user) void registerForPush();
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, loading, setUser, refreshMe, signOut }}>

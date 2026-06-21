@@ -4,7 +4,6 @@ import {
   IonPage,
   IonRefresher,
   IonRefresherContent,
-  IonSpinner,
 } from '@ionic/react';
 import {
   swapHorizontalOutline,
@@ -13,8 +12,10 @@ import {
   addCircleOutline,
 } from 'ionicons/icons';
 import ZenttoHeader from '../components/ZenttoHeader';
+import { ListSkeleton } from '../components/Skeletons';
 import { usePayments } from '../hooks/usePayments';
 import { formatAmount, formatDate, paymentStatusMeta } from '../lib/format';
+import { tapLight } from '../lib/haptics';
 import type { Payment } from '../api/types';
 
 // Tipos que representan entrada de saldo (signo +).
@@ -35,6 +36,7 @@ export default function MovementsPage() {
         <IonRefresher
           slot="fixed"
           onIonRefresh={async (e) => {
+            tapLight();
             await payments.refetch();
             e.detail.complete();
           }}
@@ -44,21 +46,19 @@ export default function MovementsPage() {
 
         <div className="zt-screen">
           {payments.isLoading && !payments.data ? (
-            <div style={{ textAlign: 'center', padding: 28 }}>
-              <IonSpinner name="crescent" />
-            </div>
+            <ListSkeleton rows={6} />
           ) : payments.isError ? (
-            <div className="zt-empty">
+            <div className="zt-empty zt-enter">
               <IonIcon icon={swapHorizontalOutline} />
-              <p>No se pudo cargar el historial. Desliza para reintentar.</p>
+              <p>No se pudo cargar el historial. Desliza hacia abajo para reintentar.</p>
             </div>
           ) : items.length === 0 ? (
-            <div className="zt-empty">
+            <div className="zt-empty zt-enter">
               <IonIcon icon={swapHorizontalOutline} />
               <p>Aún no tienes movimientos. Recibe o envía saldo para verlos aquí.</p>
             </div>
           ) : (
-            <div className="zt-card" style={{ padding: '4px 16px' }}>
+            <div className="zt-card zt-stagger" style={{ padding: '4px 16px' }}>
               {items.map((p) => (
                 <MovementRow key={p.id} p={p} />
               ))}

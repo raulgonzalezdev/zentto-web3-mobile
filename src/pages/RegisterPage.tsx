@@ -43,7 +43,7 @@ export default function RegisterPage() {
     <IonPage>
       <IonContent className="zt-page" fullscreen>
         <div className="zt-screen">
-          <div className="zt-brand">
+          <div className="zt-brand zt-enter">
             <div className="zt-logo">Z</div>
             <h1>Crear cuenta</h1>
             <p>Únete a Zentto en menos de un minuto.</p>

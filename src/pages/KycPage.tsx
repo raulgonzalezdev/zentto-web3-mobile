@@ -19,6 +19,7 @@ import {
 import ZenttoHeader from '../components/ZenttoHeader';
 import ImageCapture from '../components/ImageCapture';
 import { useKycStatus, useVerifyDocuments } from '../hooks/useKyc';
+import { tapLight, notifySuccess, notifyError, notifyWarning } from '../lib/haptics';
 import { ApiError } from '../api/client';
 import type { CapturedImage } from '../lib/capture';
 import type { KycStatus } from '../api/types';
@@ -80,9 +81,11 @@ export default function KycPage() {
 
   async function submit() {
     if (!front) {
+      notifyWarning();
       present({ message: 'El documento (frente) es obligatorio', duration: 1800, color: 'warning' });
       return;
     }
+    tapLight();
     try {
       const res = await verifyMut.mutateAsync({
         front: front.blob,
@@ -91,6 +94,9 @@ export default function KycPage() {
         fullName: fullName.trim() || undefined,
       });
       const rm = meta(res.status);
+      if (res.status === 'approved') notifySuccess();
+      else if (res.status === 'rejected') notifyError();
+      else notifyWarning();
       present({
         message: `Verificación: ${rm.label}`,
         duration: 2200,
@@ -102,6 +108,7 @@ export default function KycPage() {
               : 'warning',
       });
     } catch (err) {
+      notifyError();
       const msg = err instanceof ApiError ? err.message : 'No se pudo enviar la verificación';
       present({ message: msg, duration: 2600, color: 'danger' });
     }

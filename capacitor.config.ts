@@ -12,15 +12,17 @@ const config: CapacitorConfig = {
       resizeOnFullScreen: true,
     },
     SplashScreen: {
-      // Lo ocultamos manualmente desde main.tsx tras cargar el bundle.
-      launchAutoHide: false,
+      // Lo ocultamos manualmente desde main.tsx, pero con auto-hide de respaldo
+      // (3s) para que NUNCA quede colgado si el hide manual no dispara.
+      launchAutoHide: true,
+      launchShowDuration: 3000,
       backgroundColor: '#0b0e1a',
       androidScaleType: 'CENTER_CROP',
       showSpinner: true,
       androidSpinnerStyle: 'small',
       spinnerColor: '#6366f1',
-      splashFullScreen: true,
-      splashImmersive: true,
+      splashFullScreen: false,
+      splashImmersive: false,
     },
   },
 };

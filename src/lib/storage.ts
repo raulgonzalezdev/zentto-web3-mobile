@@ -1,38 +1,24 @@
 // Almacenamiento persistente local (no sesión / no tokens de auth).
-// Usa @capacitor/Preferences en nativo (carga dinámica) y localStorage en web.
+// Usa @capacitor/preferences en nativo y localStorage en web.
 // NUNCA guardamos aquí tokens de sesión: eso vive en cookies httpOnly del backend.
 // Solo: hash del PIN, flags de seguridad (biometría on/off, lock habilitado).
+//
+// Import ESTÁTICO del plugin: los plugins de Capacitor se registran al importar y
+// NO lanzan en web (solo fallan al LLAMAR un método en plataforma no soportada,
+// lo cual evitamos con Capacitor.isNativePlatform()). El import dinámico con
+// specifier VARIABLE no lo empaquetaba Vite → el plugin nunca se registraba.
 
-type PrefsModule = {
-  Preferences?: {
-    get: (o: { key: string }) => Promise<{ value: string | null }>;
-    set: (o: { key: string; value: string }) => Promise<void>;
-    remove: (o: { key: string }) => Promise<void>;
-  };
-};
+import { Capacitor } from '@capacitor/core';
+import { Preferences } from '@capacitor/preferences';
 
-let prefsPromise: Promise<PrefsModule['Preferences'] | null> | null = null;
-
-async function getPrefs(): Promise<PrefsModule['Preferences'] | null> {
-  if (!prefsPromise) {
-    prefsPromise = (async () => {
-      try {
-        const specifier = '@capacitor/preferences';
-        const mod = (await import(/* @vite-ignore */ specifier).catch(() => null)) as PrefsModule | null;
-        return mod?.Preferences ?? null;
-      } catch {
-        return null;
-      }
-    })();
-  }
-  return prefsPromise;
+function useNativePrefs(): boolean {
+  return Capacitor.isNativePlatform();
 }
 
 export async function storageGet(key: string): Promise<string | null> {
-  const prefs = await getPrefs();
-  if (prefs) {
+  if (useNativePrefs()) {
     try {
-      const { value } = await prefs.get({ key });
+      const { value } = await Preferences.get({ key });
       return value;
     } catch {
       /* cae a localStorage */
@@ -46,10 +32,9 @@ export async function storageGet(key: string): Promise<string | null> {
 }
 
 export async function storageSet(key: string, value: string): Promise<void> {
-  const prefs = await getPrefs();
-  if (prefs) {
+  if (useNativePrefs()) {
     try {
-      await prefs.set({ key, value });
+      await Preferences.set({ key, value });
       return;
     } catch {
       /* cae a localStorage */
@@ -63,10 +48,9 @@ export async function storageSet(key: string, value: string): Promise<void> {
 }
 
 export async function storageRemove(key: string): Promise<void> {
-  const prefs = await getPrefs();
-  if (prefs) {
+  if (useNativePrefs()) {
     try {
-      await prefs.remove({ key });
+      await Preferences.remove({ key });
     } catch {
       /* sigue limpiando localStorage */
     }
