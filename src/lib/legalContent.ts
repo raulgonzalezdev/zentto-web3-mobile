@@ -25,7 +25,7 @@ export const LEGAL_DOCS: Record<LegalDoc['slug'], LegalDoc> = {
       {
         heading: 'Objeto y aceptación',
         paragraphs: [
-          'Estos Términos y Condiciones regulan el acceso y uso de la plataforma Zentto Web3 (en adelante, “la Plataforma”), un servicio de neobanco custodial que permite mantener saldos en criptoactivos, realizar transferencias internas, depósitos y retiros on-chain, y operar en un mercado entre usuarios (P2P).',
+          'Estos Términos y Condiciones regulan el acceso y uso de la plataforma Zentto Web3 (en adelante, “la Plataforma”), una plataforma de finanzas digitales custodial que permite mantener saldos en criptoactivos, realizar transferencias internas, depósitos y retiros on-chain, y operar en un mercado entre usuarios (P2P).',
           'Al registrarte y utilizar la Plataforma aceptas estos Términos en su totalidad. Si no estás de acuerdo con alguna de sus cláusulas, debes abstenerte de usar el servicio.',
         ],
       },
@@ -97,7 +97,7 @@ export const LEGAL_DOCS: Record<LegalDoc['slug'], LegalDoc> = {
       {
         heading: 'Finalidades del tratamiento',
         paragraphs: [
-          'Prestar el servicio de neobanco custodial, ejecutar tus operaciones y mantener tu cuenta.',
+          'Prestar el servicio de finanzas digitales custodial, ejecutar tus operaciones y mantener tu cuenta.',
           'Cumplir obligaciones legales y regulatorias, en particular las relativas a la prevención de lavado de dinero y financiamiento del terrorismo, lo que incluye verificación de identidad y screening contra listas de sanciones.',
           'Garantizar la seguridad de la Plataforma, prevenir el fraude y atender solicitudes de soporte.',
         ],
@@ -142,7 +142,7 @@ export const LEGAL_DOCS: Record<LegalDoc['slug'], LegalDoc> = {
       {
         heading: 'Naturaleza del servicio',
         paragraphs: [
-          'Zentto es un neobanco custodial en fase de desarrollo que opera, en parte, sobre redes de prueba (testnet). Algunos saldos y operaciones pueden tener carácter demostrativo y no representar valor económico real.',
+          'Zentto es una plataforma de finanzas digitales custodial en fase de desarrollo que opera, en parte, sobre redes de prueba (testnet). Algunos saldos y operaciones pueden tener carácter demostrativo y no representar valor económico real.',
           'El servicio se ofrece “tal cual” y “según disponibilidad”. Pueden existir interrupciones, mantenimientos o cambios de funcionalidad sin previo aviso.',
         ],
       },

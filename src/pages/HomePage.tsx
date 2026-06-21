@@ -17,12 +17,12 @@ import {
 import ZenttoHeader from '../components/ZenttoHeader';
 import { BalanceSkeleton, ListSkeleton } from '../components/Skeletons';
 import { useEvmInfo, isEvmUnavailable } from '../hooks/useEvm';
-import { useAccountBalance } from '../hooks/usePayments';
+import { useAccountBalance, usePayments } from '../hooks/usePayments';
 import { useAuth } from '../auth/AuthContext';
 import { useCountUp } from '../hooks/useCountUp';
-import { formatAmount } from '../lib/format';
+import { formatAmount, formatDate, paymentTypeLabel } from '../lib/format';
 import { tapLight } from '../lib/haptics';
-import type { AccountBalance } from '../api/types';
+import type { AccountBalance, Payment } from '../api/types';
 
 // Asset principal mostrado en grande. Si no hay saldo aún, se usa USDT.
 const PRIMARY_ASSET = 'USDT';
@@ -170,18 +170,8 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Acceso a movimientos */}
-          {balances.length > 0 && (
-            <IonButton
-              expand="block"
-              fill="clear"
-              style={{ marginTop: 8 }}
-              onClick={() => go('/movements')}
-            >
-              <IonIcon slot="start" icon={swapHorizontalOutline} />
-              Ver historial
-            </IonButton>
-          )}
+          {/* Movimientos recientes — listado embebido */}
+          <RecentMovements onSeeAll={() => go('/movements')} />
         </div>
       </IonContent>
     </IonPage>
@@ -203,5 +193,65 @@ function AssetRow({ b }: { b: AccountBalance }) {
       </div>
       <strong>{formatAmount(b.available)}</strong>
     </div>
+  );
+}
+
+const INFLOW = new Set(['receive', 'deposit', 'credit', 'recharge']);
+
+/** Listado embebido de los últimos movimientos en Inicio (+ enlace a todo). */
+function RecentMovements({ onSeeAll }: { onSeeAll: () => void }) {
+  const payments = usePayments();
+  const recent = (payments.data ?? []).slice(0, 5);
+
+  return (
+    <>
+      <div className="zt-section-head" style={{ marginTop: 18 }}>
+        <h3>Movimientos recientes</h3>
+        <button
+          type="button"
+          className="zt-link"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--zt-indigo)' }}
+          onClick={onSeeAll}
+        >
+          Ver todo
+        </button>
+      </div>
+
+      {payments.isLoading && !payments.data ? (
+        <div className="zt-card zt-stagger">
+          <ListSkeleton rows={3} />
+        </div>
+      ) : recent.length === 0 ? (
+        <div className="zt-card zt-enter">
+          <div className="zt-empty" style={{ padding: '20px 8px' }}>
+            <IonIcon icon={swapHorizontalOutline} />
+            <p>Aún no tienes movimientos. Recarga o recibe para empezar.</p>
+          </div>
+        </div>
+      ) : (
+        <div className="zt-card zt-stagger">
+          {recent.map((p: Payment) => {
+            const inflow = INFLOW.has((p.type || '').toLowerCase());
+            return (
+              <div className="zt-row" key={p.id} role="button" onClick={onSeeAll} style={{ cursor: 'pointer' }}>
+                <div className="zt-token">
+                  <div className="zt-token-badge" style={{ color: inflow ? 'var(--zt-success)' : 'var(--zt-text-dim)' }}>
+                    {inflow ? '↓' : '↑'}
+                  </div>
+                  <div>
+                    <div>{paymentTypeLabel(p.type)}</div>
+                    <div className="zt-muted" style={{ fontSize: 12 }}>{formatDate(p.createdAt)}</div>
+                  </div>
+                </div>
+                <strong style={{ color: inflow ? 'var(--zt-success)' : 'var(--zt-text)' }}>
+                  {inflow ? '+' : '−'}
+                  {formatAmount(p.amount)} {p.asset}
+                </strong>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
   );
 }
