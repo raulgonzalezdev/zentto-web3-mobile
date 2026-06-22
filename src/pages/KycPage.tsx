@@ -8,6 +8,8 @@ import {
   IonPage,
   IonRefresher,
   IonRefresherContent,
+  IonSelect,
+  IonSelectOption,
   IonSpinner,
   useIonToast,
 } from '@ionic/react';
@@ -25,7 +27,20 @@ import { useKycStatus, useVerifyDocuments } from '../hooks/useKyc';
 import { tapLight, notifySuccess, notifyError, notifyWarning } from '../lib/haptics';
 import { ApiError } from '../api/client';
 import type { CapturedImage } from '../lib/capture';
+import type { DocumentType } from '../api/kyc';
 import type { KycStatus } from '../api/types';
+
+// Tipos de documento soportados (extensible — basta añadir una entrada).
+// `hasBack` indica si el documento tiene reverso (anverso + reverso) o es de una
+// sola cara, para pedir solo las fotos necesarias.
+const DOC_TYPES: { value: DocumentType; label: string; hint: string; hasBack: boolean }[] = [
+  { value: 'id_card', label: 'Cédula de identidad', hint: 'Foto nítida del frente de tu cédula de identidad.', hasBack: false },
+  { value: 'passport', label: 'Pasaporte', hint: 'Foto nítida de la página de datos del pasaporte (con el código MRZ inferior).', hasBack: false },
+  { value: 'drivers_license', label: 'Licencia de conducir', hint: 'Foto nítida del frente de tu licencia de conducir.', hasBack: true },
+  { value: 'residence_permit', label: 'Permiso de residencia', hint: 'Foto nítida del frente del permiso de residencia.', hasBack: true },
+  { value: 'rif', label: 'RIF', hint: 'Foto nítida del RIF (Registro de Información Fiscal).', hasBack: false },
+  { value: 'nit', label: 'NIT', hint: 'Foto nítida del NIT (número de identificación tributaria).', hasBack: false },
+];
 
 const STATUS_META: Record<string, { label: string; color: string; icon: string; msg: string }> = {
   not_started: {
@@ -70,9 +85,12 @@ export default function KycPage() {
   const verifyMut = useVerifyDocuments();
 
   const [fullName, setFullName] = useState('');
+  const [docType, setDocType] = useState<DocumentType>('id_card');
   const [front, setFront] = useState<CapturedImage | null>(null);
   const [back, setBack] = useState<CapturedImage | null>(null);
   const [selfie, setSelfie] = useState<CapturedImage | null>(null);
+
+  const docMeta = DOC_TYPES.find((d) => d.value === docType) ?? DOC_TYPES[0];
 
   const status = statusQ.data?.status ?? 'not_started';
   const m = meta(status);
@@ -94,6 +112,7 @@ export default function KycPage() {
         back: back?.blob ?? null,
         selfie: selfie?.blob ?? null,
         fullName: fullName.trim() || undefined,
+        documentType: docType,
       });
       const rm = meta(res.status);
       if (res.status === 'approved') notifySuccess();
@@ -196,6 +215,38 @@ export default function KycPage() {
                 segura en la app; no salimos a ningún sitio externo.
               </p>
 
+              {/* Tipo de documento — extensible (cédula, pasaporte, licencia, RIF, …) */}
+              <IonItem className="zt-card" lines="none" style={{ marginTop: 12 }}>
+                <IonSelect
+                  label="Tipo de documento"
+                  labelPlacement="stacked"
+                  value={docType}
+                  interface="action-sheet"
+                  onIonChange={(e) => {
+                    const next = (e.detail.value as DocumentType) ?? 'id_card';
+                    setDocType(next);
+                    // Si el nuevo tipo no tiene reverso, descarta la foto del dorso.
+                    const meta = DOC_TYPES.find((d) => d.value === next);
+                    if (meta && !meta.hasBack) setBack(null);
+                  }}
+                >
+                  {DOC_TYPES.map((d) => (
+                    <IonSelectOption key={d.value} value={d.value}>
+                      {d.label}
+                    </IonSelectOption>
+                  ))}
+                </IonSelect>
+              </IonItem>
+
+              {/* Cuántas fotos se tomarán según el tipo */}
+              <p className="zt-muted" style={{ margin: '10px 2px 0' }}>
+                📸 Para tu <strong>{docMeta.label}</strong> necesitas{' '}
+                <strong>
+                  {docMeta.hasBack ? '3 fotos' : '2 fotos'}
+                </strong>
+                : frente{docMeta.hasBack ? ', dorso' : ''} y selfie.
+              </p>
+
               <IonItem className="zt-card" lines="none" style={{ marginTop: 12 }}>
                 <IonInput
                   label="Nombre completo (opcional)"
@@ -207,20 +258,22 @@ export default function KycPage() {
               </IonItem>
 
               <ImageCapture
-                label="Documento (frente)"
+                label={`${docMeta.label} (frente)`}
                 required
                 shape="card"
-                hint="Encuadra el frente de tu cédula/pasaporte en el recuadro."
+                hint={docMeta.hint}
                 value={front}
                 onChange={setFront}
               />
-              <ImageCapture
-                label="Documento (dorso)"
-                shape="card"
-                hint="Opcional — reverso del documento."
-                value={back}
-                onChange={setBack}
-              />
+              {docMeta.hasBack && (
+                <ImageCapture
+                  label={`${docMeta.label} (dorso)`}
+                  shape="card"
+                  hint="Reverso del documento."
+                  value={back}
+                  onChange={setBack}
+                />
+              )}
               <ImageCapture
                 label="Selfie"
                 shape="oval"

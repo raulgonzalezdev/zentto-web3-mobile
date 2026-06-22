@@ -27,6 +27,7 @@ export default function ImageCapture({
   onChange,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [showCam, setShowCam] = useState(false);
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -40,7 +41,13 @@ export default function ImageCapture({
   }
 
   function takePhoto() {
-    setShowCam(true);
+    // Documentos ('card') → cámara NATIVA de alta resolución (necesaria para que
+    // el OCR lea cédula/pasaporte). Selfie ('oval') → cámara en la app con óvalo.
+    if (shape === 'card') {
+      cameraInputRef.current?.click();
+    } else {
+      setShowCam(true);
+    }
   }
 
   function onCaptured(img: CapturedImage) {
@@ -117,6 +124,7 @@ export default function ImageCapture({
         </IonButton>
       </div>
 
+      {/* Galería (sin capture) */}
       <input
         ref={inputRef}
         type="file"
@@ -124,15 +132,27 @@ export default function ImageCapture({
         onChange={onFile}
         style={{ display: 'none' }}
       />
-
-      <CameraCaptureModal
-        isOpen={showCam}
-        shape={shape}
-        title={label}
-        hint={hint}
-        onCapture={onCaptured}
-        onDismiss={() => setShowCam(false)}
+      {/* Cámara nativa de alta resolución (documentos) */}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={onFile}
+        style={{ display: 'none' }}
       />
+
+      {/* Cámara en la app con óvalo — solo selfie */}
+      {shape === 'oval' && (
+        <CameraCaptureModal
+          isOpen={showCam}
+          shape={shape}
+          title={label}
+          hint={hint}
+          onCapture={onCaptured}
+          onDismiss={() => setShowCam(false)}
+        />
+      )}
     </div>
   );
 }
