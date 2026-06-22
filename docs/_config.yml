@@ -1,0 +1,21 @@
+title: Zentto Web3 — App móvil
+description: >-
+  Documentación técnica y de uso de la app móvil de usuario final del servicio
+  cripto custodial Zentto (Ionic React + Capacitor).
+remote_theme: pages-themes/cayman@v0.2.0
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag
+
+# Páginas del sitio (orden de navegación)
+nav:
+  - title: Visión general
+    url: /
+  - title: Arquitectura
+    url: /arquitectura
+  - title: Pantallas y flujos
+    url: /pantallas
+  - title: Integración con la API
+    url: /api
+  - title: Build & deploy
+    url: /build
