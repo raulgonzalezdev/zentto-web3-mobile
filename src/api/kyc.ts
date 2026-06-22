@@ -23,11 +23,23 @@ export async function createKycSession(fullName?: string): Promise<KycSession> {
   });
 }
 
+// Tipos conocidos + abierto a cualquier otro (preparado para crecer como Didit).
+export type DocumentType =
+  | 'id_card'
+  | 'passport'
+  | 'drivers_license'
+  | 'residence_permit'
+  | 'rif'
+  | 'nit'
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  | (string & {});
+
 export interface VerifyDocumentsInput {
   front: Blob; // documento (frente) — obligatorio
   back?: Blob | null; // dorso — opcional
   selfie?: Blob | null; // selfie — opcional
   fullName?: string;
+  documentType?: DocumentType; // tipo elegido por el usuario (cédula/pasaporte/licencia)
 }
 
 /**
@@ -41,6 +53,7 @@ export async function verifyDocuments(input: VerifyDocumentsInput): Promise<KycV
   if (input.back) fd.append('back_image', input.back, 'back.jpg');
   if (input.selfie) fd.append('selfie', input.selfie, 'selfie.jpg');
   if (input.fullName) fd.append('fullName', input.fullName);
+  if (input.documentType) fd.append('documentType', input.documentType);
 
   return apiFetch<KycVerifyResult>('/kyc/verify-documents', {
     method: 'POST',
