@@ -1,131 +1,179 @@
-# Zentto Web3 — App móvil de usuarios
+# Zentto Web3 — App móvil
 
-Neobanco cripto (modelo Kontigo/Meru) para los **usuarios finales**. El web frontend
-(`zentto-web3-frontend`) es el backoffice de operadores; **esta** es la app de clientes.
+> El centro de tu dinero digital. App móvil de usuario final para enviar, recibir,
+> recargar y comprar/vender dólares digitales (USDT/USDC) desde el teléfono.
 
-Construida con **Ionic React + Capacitor + TypeScript (Vite)**. Corre en navegador para dev y
-se empaqueta nativo (Android/iOS) con Capacitor.
+App móvil **Ionic React + Capacitor** para los usuarios finales del servicio cripto
+custodial de Zentto. Consume la API del backend [`zentto-web3`](https://github.com/raulgonzalezdev/zentto-web3)
+(modelo custodial estilo Kontigo/Meru/Binance P2P): el saldo del usuario vive en un
+**ledger** del backend, no en la blockchain — las claves privadas **nunca** se manejan en
+esta app.
+
+## Lugar en el ecosistema
+
+| Repo | Rol | Stack |
+|------|-----|-------|
+| [`zentto-web3`](https://github.com/raulgonzalezdev/zentto-web3) | Backend custodial (API que consume esta app) | NestJS |
+| [`zentto-web3-frontend`](https://github.com/raulgonzalezdev/zentto-web3-frontend) | Backoffice de operadores (web) | Next.js |
+| **`zentto-web3-mobile`** (este) | App de **usuario final** | Ionic React + Capacitor |
+| [`zentto-kyc`](https://github.com/zentto-erp/zentto-kyc) | Servicio KYC self-hosted multi-tenant ([kyc.zentto.net](https://kyc.zentto.net)) | Express + FastAPI |
+
+Esta app y el backoffice consumen el **mismo backend** y comparten contrato de auth
+(cookies httpOnly + CSRF + 2FA TOTP). El backoffice es para operadores/árbitros; esta es
+para clientes.
 
 ## Stack
 
-- Ionic React (`@ionic/react`, `@ionic/react-router`) + React 18.
-- Capacitor 6 (`@capacitor/core`, `@capacitor/android`, `@capacitor/ios`, `@capacitor/cli`).
-- `@tanstack/react-query` para datos remotos.
-- `qrcode` para el QR de la pantalla Recibir.
-- Vite como bundler.
+- **Ionic React** `@ionic/react` 8 + `@ionic/react-router` 8 (React 18, modo oscuro forzado).
+- **Capacitor 6** (`@capacitor/core`, `android`, `ios`, `cli`).
+- **TanStack React Query 5** para datos remotos y cache.
+- **Vite 5** como bundler · **TypeScript 5**.
+- `qrcode` para los QR de Recibir / 2FA.
 
-`capacitor.config.ts`: `appId = net.zentto.web3app`, `appName = "Zentto"`.
+`capacitor.config.ts`: `appId = net.zentto.web3app`, `appName = "Zentto"`, `webDir = dist`.
+
+### Plugins nativos de Capacitor
+
+| Plugin | Uso en la app |
+|--------|---------------|
+| `@capacitor/app` | Ciclo de vida (pause/resume) para el auto-bloqueo de la app |
+| `@capacitor/browser` | Abre la sesión hospedada de KYC (Didit) en el navegador del sistema |
+| `@capacitor/local-notifications` | Avisa cuando llega dinero (notificación local, sin Firebase) |
+| `@capacitor/preferences` / `capacitor-secure-storage-plugin` | Almacenamiento local seguro (config de candado, address vinculada) |
+| `capacitor-native-biometric` | Desbloqueo por huella / Face ID |
+| `@capacitor/clipboard` · `@capacitor/share` | Copiar/compartir direcciones y datos de pago |
+| `@capacitor/haptics` | Feedback táctil en navegación y acciones |
+| `@capacitor/keyboard` · `@capacitor/status-bar` · `@capacitor/splash-screen` | UX nativa (teclado, barra de estado, splash) |
+
+La cámara nativa para captura de documentos/selfie en KYC se usa vía la Web API
+`getUserMedia` dentro del WebView (permiso `CAMERA` declarado en el manifest Android).
+
+## Features / pantallas reales
+
+Navegación principal por **bottom tabs** (Inicio · Enviar · Recibir · P2P · Historial) +
+un **drawer lateral** de configuración. Rutas con sesión protegidas por `AuthContext`; si
+hay PIN configurado, un **LockScreen** a pantalla completa exige PIN/huella antes de entrar.
+
+| Ruta | Pantalla | Propósito |
+|------|----------|-----------|
+| `/login` | LoginPage | Inicio de sesión (email + password, con reto 2FA si aplica) |
+| `/register` | RegisterPage | Alta de cuenta |
+| `/home` | HomePage | Tarjeta de saldo del ledger + accesos Enviar/Recibir/Recargar + historial embebido |
+| `/send` | SendPage | Transferencia a otro usuario por email (buscador) sobre el ledger |
+| `/receive` | ReceivePage | Dirección/QR para recibir + compartir |
+| `/recharge` | RechargePage | Recargar saldo: depósito on-chain multi-red o pago fiat |
+| `/movements` | MovementsPage | Historial de movimientos del ledger + detalle por transacción |
+| `/p2p` | P2pPage | Mercado P2P: comprar/vender USDT/USDC contra VES (order book) |
+| `/p2p/trade/:id` | TradeDetailPage | Detalle de un trade: escrow, chat, evidencias de pago, disputas, extensión de tiempo |
+| `/explore` | ExplorePage | Consulta de saldo on-chain / estado de transacción por hash (lectura blockchain) |
+| `/profile` | ProfilePage | Perfil del usuario, edición de nombre/teléfono, estado 2FA, logout |
+| `/kyc` | KycPage | Verificación de identidad (documento + selfie) — Didit hospedado o captura nativa |
+| `/security` | SecurityPage | Configurar 2FA (TOTP / Google Authenticator) |
+| `/app-security` | AppSecurityPage | Candado de la app: PIN + desbloqueo biométrico |
+| `/payment-methods` | PaymentMethodsPage | Métodos de cobro (Pago Móvil / cuenta bancaria) para P2P |
+| `/legal/:slug` | LegalPage | Documentos legales (términos, privacidad…) |
+
+Funcionalidades transversales:
+
+- **Auth** cookies httpOnly + CSRF double-submit + auto-refresh ante 401 + **2FA TOTP**.
+- **Candado de app**: PIN propio + biometría, con re-bloqueo por inactividad (gracia 30s).
+- **Notificaciones locales** al detectar dinero entrante mientras la app está abierta.
+- **Step-up TOTP** (segundo factor) en operaciones sensibles: retiro on-chain, confirmar trade P2P.
+- **Idempotencia**: las mutaciones que mueven saldo envían `Idempotency-Key` por intento.
+
+## Integración con el backend `zentto-web3`
+
+Cliente HTTP propio en `src/api/client.ts` (`apiFetch`): `credentials:'include'`, header
+`x-csrf-token` (cookie `zw3_csrf`) en mutaciones, auto `POST /auth/refresh` una vez ante 401.
+URL base configurable por `VITE_API_BASE` (default `http://localhost:4100/api`).
+
+| Módulo (`src/api/`) | Endpoints consumidos |
+|---------------------|----------------------|
+| `auth.ts` | `/auth/me`, `/auth/login`, `/auth/login/2fa`, `/auth/register`, `/auth/logout`, `/auth/csrf`, `/auth/refresh` |
+| `payments.ts` | `/accounts/balance`, `/accounts/deposit-address`, `/accounts/deposits`, `/payments`, `/payments/transfer`, `/payments/credit`, `/payments/withdraw`, `/networks`, `/fees`, `/me/withdraw-addresses` |
+| `p2p.ts` | `/p2p/orders`, `/p2p/orders/mine`, `/p2p/orders/:id/{take,cancel}`, `/p2p/trades`, `/p2p/trades/:id/{paid,confirm,extend,dispute,cancel,messages}`, `/p2p/market` |
+| `kyc.ts` | `/kyc/status`, `/kyc/session` (Didit hospedado), `/kyc/verify-documents` (captura nativa) |
+| `security.ts` | `/auth/2fa/setup`, `/auth/2fa/enable` |
+| `paymentMethods.ts` | `/me/payment-methods` (CRUD) |
+| `users.ts` | `/users/search`, `/users/me` |
+| `evm.ts` | `/evm/info`, `/evm/address/:address`, `/evm/tx/:hash` (lectura blockchain — Explorar) |
+
+> Nota de seguridad: nunca se guardan tokens en `localStorage`. La sesión vive en cookies
+> httpOnly del backend (`zw3_access`, `zw3_refresh`); el CSRF (`zw3_csrf`) se reenvía como
+> header. La address EVM vinculada (Explorar) es pública y vive solo en `sessionStorage`.
 
 ## Requisitos
 
-- Node 18+ (probado con Node 22) y npm.
-- El **backend Zentto Web3** corriendo en `http://localhost:4100` (auth + endpoints `/api/evm/*`).
+- **Node 18+** (probado con Node 22) y npm.
+- Backend [`zentto-web3`](https://github.com/raulgonzalezdev/zentto-web3) corriendo (por
+  defecto `http://localhost:4100/api`).
+- Para compilar nativo: **Android Studio** (Android) y/o **Xcode + macOS** (iOS).
 
-## Correr en desarrollo (navegador)
+## Setup local (web / desarrollo)
 
 ```bash
 npm install
-cp .env.example .env       # ya incluido; ajusta VITE_API_BASE si hace falta
-npm run dev                # Vite en http://localhost:3200
+cp .env.example .env        # ajusta VITE_API_BASE si tu backend no está en :4100
+npm run dev                 # Vite en http://localhost:3200 (--host)
 ```
 
-Abre `http://localhost:3200`. Verás Onboarding/Login. Con el backend en `:4100` puedes
-registrarte, iniciar sesión (incluido reto 2FA si la cuenta lo tiene), y navegar las pantallas.
+Abre `http://localhost:3200`. Con el backend arriba puedes registrarte, iniciar sesión
+(incluido reto 2FA) y navegar todas las pantallas.
 
-> El backend ya tiene CORS con credenciales. Como Vite corre en `:3200` (no `:3100`), si el
-> backend restringe orígenes puede que las cookies no se sienten en navegador. En ese caso, corre
-> el front en `:3100` (`npm run dev -- --port 3100`) o agrega `:3200` a la allowlist CORS del
-> backend. Ver "Supuestos" abajo.
+### Variables de entorno
 
-## Build de producción (web)
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `VITE_API_BASE` | `http://localhost:4100/api` | URL base del backend (incluye `/api`) |
 
-```bash
-npm run build      # tsc --noEmit + vite build → dist/
-npm run preview    # sirve dist/ en :3200
-```
+## Scripts
 
-## Capacitor (nativo — opcional, NO necesario para probar)
+| Script | Acción |
+|--------|--------|
+| `npm run dev` | Vite dev server en `:3200` (`--host`) |
+| `npm run build` | `tsc --noEmit` + `vite build` → `dist/` |
+| `npm run preview` | Sirve `dist/` en `:3200` |
+| `npm run lint` | ESLint sobre `src/` |
+| `npm run cap:sync` | `cap sync` (copia web + plugins a las plataformas nativas) |
+| `npm run cap:add:android` / `:ios` | Añade la plataforma nativa |
 
-Compilar nativo requiere **Android Studio** (Android) y **Xcode** (iOS), que no están en este
-entorno. Pasos cuando se quiera empaquetar:
+## Build nativo (Android / iOS)
 
 ```bash
 npm run build
-npx cap add android      # o: npm run cap:add:android
-npx cap add ios          # requiere macOS + Xcode
+npx cap add android          # o: npm run cap:add:android
 npx cap sync
-npx cap open android     # abre Android Studio
+npx cap open android         # abre Android Studio → Build APK/AAB
 ```
 
-Las carpetas `android/` e `ios/` están en `.gitignore` (se regeneran con `cap add`).
+iOS requiere macOS + Xcode (`npx cap add ios` && `npx cap open ios`).
 
-### Cookies httpOnly en nativo (follow-up)
-
-En navegador, `fetch` con `credentials:'include'` maneja las cookies httpOnly del backend de
-forma transparente. En **WebView nativo** el manejo de cookies cross-origin es menos fiable; la
-ruta recomendada es migrar el cliente API a **`@capacitor/preferences` + `CapacitorHttp`** (o el
-plugin `@capacitor-community/http`), que respeta cookies del sistema. Esto queda como follow-up:
-el código del cliente (`src/api/client.ts`) está aislado para sustituir solo la capa de transporte.
+- **Android**: `applicationId = net.zentto.web3app`, `minSdk 22`, `target/compile SDK 34`,
+  `versionName "1.0"`. Permisos: `INTERNET`, `CAMERA` (KYC). Las carpetas `android/`/`ios/`
+  están en `.gitignore` (se regeneran con `cap add` / `cap sync`).
 
 ## Estructura
 
 ```
 src/
-  api/
-    client.ts        # fetch con credentials:'include', CSRF double-submit, auto-refresh 401
-    auth.ts          # login / register / 2fa / me / logout
-    evm.ts           # /evm/info, /evm/address/:address, /evm/tx/:hash + normalizadores
-    types.ts         # tipos User / EVM
-  auth/
-    AuthContext.tsx  # estado de sesión; sondeo inicial de /auth/me (retryOnAuth:false)
-  components/
-    QrCode.tsx       # QR en canvas (lib qrcode)
-    ZenttoHeader.tsx
-  hooks/
-    useEvm.ts        # react-query para los 3 endpoints EVM + validadores address/hash
-    useWallet.ts     # address EVM vinculada (sessionStorage, NO llaves privadas)
-  pages/
-    LoginPage.tsx · RegisterPage.tsx
-    HomePage.tsx     # tarjeta de saldo + vincular address + activos reales
-    SendPage.tsx · ReceivePage.tsx · MovementsPage.tsx · ProfilePage.tsx
-  theme/zentto.css   # tema oscuro indigo/cyan + overrides Ionic
-  App.tsx            # router + bottom tabs (auth-gated)
-  main.tsx           # bootstrap Ionic + react-query + AuthProvider
-capacitor.config.ts · vite.config.ts · index.html
+  api/        client.ts (fetch+CSRF+refresh) · auth · payments · p2p · kyc · security
+              paymentMethods · users · evm · types
+  auth/       AuthContext.tsx (sesión) · LockContext.tsx (candado PIN/biometría)
+  components/ LockScreen · PinPad · CameraCaptureModal · ImageCapture · QrCode
+              SettingsMenu · PublishOfferModal · TransactionDetailModal · StatusChip · Skeletons · ZenttoHeader
+  hooks/      useEvm · useP2p · useKyc · usePayments · usePaymentMethods · useSecurity
+              useUsers · useWallet · useStepUp · useIncomingNotifications · useCountUp
+  lib/        biometric · pinLock · secureStore · notifications · push · haptics · clipboard
+              share · browser · capture · fees · format · paymentMethod · venezuelanBanks · statusBar · storage · legalContent
+  pages/      Login · Register · Home · Send · Receive · Recharge · Movements
+              P2p · TradeDetail · Explore · Profile · Kyc · Security · AppSecurity · PaymentMethods · Legal
+  theme/      zentto.css (oscuro indigo/cyan + overrides Ionic)
+  App.tsx     router + bottom tabs (auth-gated) · main.tsx bootstrap
+capacitor.config.ts · vite.config.ts · index.html · android/
 ```
 
-## Pantallas
+## Documentación
 
-1. **Login / Registro / 2FA** — contra `/api/auth/*`, cookies httpOnly.
-2. **Inicio (Saldo)** — tarjeta de cuenta; vincula una address EVM y muestra su saldo real de
-   testnet (ETH + USDC) vía `/api/evm/address/:address`. Botones Enviar / Recibir.
-3. **Enviar** — formulario de transferencia (vista previa del flujo; firma/custodia = follow-up).
-4. **Recibir** — address con **QR** + copiar.
-5. **Movimientos** — estado de tx por hash vía `/api/evm/tx/:hash`.
-6. **Perfil** — datos de `/api/auth/me`, estado 2FA, logout.
-
-## Seguridad
-
-- **NUNCA** se guardan tokens en localStorage. La sesión vive en cookies httpOnly del backend
-  (`zw3_access`, `zw3_refresh`); el CSRF (`zw3_csrf`) se lee y se reenvía como `x-csrf-token` en
-  mutaciones.
-- La address EVM vinculada es **pública** y se guarda solo en `sessionStorage` (no persiste entre
-  cierres). Las **llaves privadas nunca se manejan en esta app**.
-
-## Supuestos / Follow-up
-
-- **Endpoints `/api/evm/*`:** al construir esta app, el backend en `:4100` respondía `404` a
-  `/api/evm/info`, `/api/evm/address/:address` y `/api/evm/tx/:hash` (auth y `/api/chain` sí
-  funcionan). La app llama a esos endpoints según el contrato del SPEC y maneja el 404 de forma
-  graceful (muestra "endpoint no disponible" sin romper). Cuando el backend los exponga, los
-  saldos reales de Sepolia aparecen sin cambios en el front. Los normalizadores en `api/evm.ts`
-  toleran varias formas de respuesta (`eth`/`native`, `usdc`/`tokens[]`).
-- **CORS / puerto:** el contrato dice que el backend permite `http://localhost:3100`. Esta app
-  corre en `:3200` por defecto. Si las cookies no se sientan, usar `:3100` o ampliar la allowlist
-  CORS del backend.
-- **Enviar (firma on-chain):** la pantalla Enviar arma el flujo pero no firma/difunde; la
-  custodia y firma reales son follow-up del backend.
-- **Gestión 2FA in-app:** el login con 2FA funciona; el setup/enable/disable desde la app queda
-  como follow-up (hoy se hace desde el web).
-- **Nativo:** no se compiló Android/iOS (requiere Android Studio/Xcode). Documentado arriba.
-```
+Documentación técnica y de uso (arquitectura, mapa de pantallas, flujos de
+onboarding/KYC/depósito/transferencia/retiro/P2P, integración con el backend y guía de
+build): **GitHub Pages** del repo (carpeta `docs/`).
