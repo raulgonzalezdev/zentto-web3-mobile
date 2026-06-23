@@ -37,7 +37,7 @@ export const SOCIAL = {
 };
 
 // ID del paquete en Play Store (para "Calificar").
-export const PLAY_STORE_ID = 'net.zentto.web3app';
+export const PLAY_STORE_ID = 'net.zentto.pay';
 
 // Reportar una falla → abre el formulario de zentto-support (dispara el CI/CD que
 // triagea con IA y deriva al departamento). module=Mobile prellenado.
@@ -60,15 +60,15 @@ export const LEGAL_DOCS: Record<LegalDoc['slug'], LegalDoc> = {
       {
         heading: 'Identificación del operador',
         paragraphs: [
-          'La aplicación Zentto Web3 es desarrollada y operada por ZENTTO GLOBAL TECHNOLOGY, C.A., empresa venezolana identificada con el RIF J-50849797-0, dedicada al desarrollo de software y soluciones informáticas en la nube (en adelante, “el Operador”).',
+          'La aplicación Zentto Pay es desarrollada y operada por ZENTTO GLOBAL TECHNOLOGY, C.A., empresa venezolana identificada con el RIF J-50849797-0, dedicada al desarrollo de software y soluciones informáticas en la nube (en adelante, “el Operador”).',
           'El Operador desarrolla el ecosistema Zentto, que incluye un ERP empresarial, soluciones verticales por industria, herramientas para desarrolladores y productos de finanzas digitales como esta aplicación.',
-          'Zentto Web3 es un producto tecnológico en fase de desarrollo. La Plataforma se ofrece como herramienta de software; no constituye, por sí misma, una entidad bancaria, casa de cambio ni institución financiera regulada.',
+          'Zentto Pay es un producto tecnológico en fase de desarrollo. La Plataforma se ofrece como herramienta de software; no constituye, por sí misma, una entidad bancaria, casa de cambio ni institución financiera regulada.',
         ],
       },
       {
         heading: 'Objeto y aceptación',
         paragraphs: [
-          'Estos Términos y Condiciones regulan el acceso y uso de la plataforma Zentto Web3 (en adelante, “la Plataforma”), una plataforma de finanzas digitales custodial que permite mantener saldos en criptoactivos, realizar transferencias internas, depósitos y retiros on-chain, y operar en un mercado entre usuarios (P2P).',
+          'Estos Términos y Condiciones regulan el acceso y uso de la plataforma Zentto Pay (en adelante, “la Plataforma”), una plataforma de finanzas digitales custodial que permite mantener saldos en criptoactivos, realizar transferencias internas, depósitos y retiros on-chain, y operar en un mercado entre usuarios (P2P).',
           'Al registrarte y utilizar la Plataforma aceptas estos Términos en su totalidad. Si no estás de acuerdo con alguna de sus cláusulas, debes abstenerte de usar el servicio.',
         ],
       },

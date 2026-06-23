@@ -148,7 +148,7 @@ export default function SupportChat() {
 
                 <button
                   className="zt-report-btn"
-                  onClick={() => Browser.open({ url: bugReportUrl('Zentto Web3', '0.1.0') })}
+                  onClick={() => Browser.open({ url: bugReportUrl('Zentto Pay', '0.1.0') })}
                 >
                   <IonIcon icon={bugOutline} /> Reportar una falla
                 </button>

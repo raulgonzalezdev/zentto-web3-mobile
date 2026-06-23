@@ -11,7 +11,7 @@ android {
     namespace "net.zentto.web3app"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "net.zentto.web3app"
+        applicationId "net.zentto.pay"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

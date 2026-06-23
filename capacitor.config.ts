@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'net.zentto.web3app',
-  appName: 'Zentto',
+  appId: 'net.zentto.pay',
+  appName: 'Zentto Pay',
   webDir: 'dist',
   server: {
     androidScheme: 'https',

@@ -30,7 +30,7 @@ export default function AboutPage() {
         <div className="zt-screen">
           <div className="zt-about-brand" onClick={() => Browser.open({ url: LANDING })} role="button">
             <div className="zt-logo">Z</div>
-            <h1>Zentto Web3</h1>
+            <h1>Zentto Pay</h1>
             <p className="zt-muted">El centro de tu dinero digital · v{APP_VERSION}</p>
             <span className="zt-about-dev">En desarrollo</span>
           </div>
@@ -38,7 +38,7 @@ export default function AboutPage() {
           <div className="zt-card">
             <h3>Qué es</h3>
             <p className="zt-legal-p">
-              Zentto Web3 es una plataforma tecnológica de finanzas digitales que te permite mantener saldos en
+              Zentto Pay es una plataforma tecnológica de finanzas digitales que te permite mantener saldos en
               criptoactivos, enviar y recibir dinero, y operar en un mercado entre usuarios (P2P). Actualmente se
               encuentra en fase de desarrollo y pruebas.
             </p>
