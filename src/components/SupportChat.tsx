@@ -72,7 +72,7 @@ export default function SupportChat() {
         <IonIcon icon={chatbubbleEllipsesOutline} />
       </button>
 
-      <IonModal className="zt-support-modal" isOpen={open} onDidDismiss={() => setOpen(false)} breakpoints={[0, 0.8]} initialBreakpoint={0.8} handle>
+      <IonModal className="zt-support-modal" isOpen={open} onDidDismiss={() => setOpen(false)}>
         <IonHeader>
           <IonToolbar className="zt-support-bar">
             <div slot="start" className="zt-support-ava"><IonIcon icon={flash} /></div>

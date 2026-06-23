@@ -1393,3 +1393,15 @@ ion-item.zt-card.ion-focused { border-color: var(--zt-indigo); box-shadow: 0 0 0
 .zt-menu .zt-menu-profile { background: linear-gradient(135deg, rgba(99, 102, 241, 0.20), rgba(99, 102, 241, 0.04)); }
 .zt-menu-list ion-item ion-icon[slot='start'] { color: var(--zt-indigo); }
 .zt-menu-list ion-item.ion-activated { --background: rgba(99, 102, 241, 0.10); }
+
+/* Chat de soporte como panel fijo abajo (footer/input siempre visible, se ve la app detrás) */
+.zt-support-modal::part(content) {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 86%;
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+}
