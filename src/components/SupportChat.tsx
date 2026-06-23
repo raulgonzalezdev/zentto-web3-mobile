@@ -11,12 +11,24 @@ import {
   IonTitle,
   IonToolbar,
 } from '@ionic/react';
-import { chatbubbleEllipsesOutline, close, flash, sendOutline } from 'ionicons/icons';
+import {
+  chatbubbleEllipsesOutline,
+  chevronForward,
+  close,
+  flash,
+  sendOutline,
+  swapHorizontalOutline,
+  walletOutline,
+} from 'ionicons/icons';
 import { useEffect, useRef, useState } from 'react';
 
 import { tapLight } from '../lib/haptics';
 import { hideKeyboard } from '../lib/keyboard';
 import { loadHistory, saveHistory, streamSupport, type SupportMsg } from '../lib/support';
+import { useAccountBalance, usePayments } from '../hooks/usePayments';
+import { formatAmount, formatDate, paymentTypeLabel } from '../lib/format';
+
+const QUICK = ['¿Cuál es mi saldo?', '¿Cómo recibo dinero?', '¿Qué es P2P?'];
 
 export default function SupportChat() {
   const [open, setOpen] = useState(false);
@@ -24,6 +36,11 @@ export default function SupportChat() {
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
+
+  const payments = usePayments();
+  const balance = useAccountBalance();
+  const recent = (payments.data ?? []).slice(0, 3);
+  const primary = (balance.data ?? [])[0];
 
   useEffect(() => {
     loadHistory().then(setMsgs);
@@ -33,8 +50,8 @@ export default function SupportChat() {
     requestAnimationFrame(() => bodyRef.current?.scrollTo({ top: 1e9, behavior: 'smooth' }));
   }, [msgs]);
 
-  const send = async () => {
-    const q = text.trim();
+  const send = async (override?: string) => {
+    const q = (override ?? text).trim();
     if (!q || busy) return;
     hideKeyboard();
     setText('');
@@ -86,9 +103,45 @@ export default function SupportChat() {
         <IonContent>
           <div className="zt-chat-body" ref={bodyRef}>
             {msgs.length === 0 && (
-              <div className="zt-chat-empty">
-                <p>👋 Hola, soy el asistente de Zentto.</p>
-                <p>Pregúntame sobre tu cuenta, transferencias, P2P, KYC o cómo usar la app.</p>
+              <div className="zt-chat-welcome">
+                <p className="zt-chat-hi">👋 Hola, aquí tienes tu resumen:</p>
+
+                {primary && (
+                  <button className="zt-ai-card" onClick={() => send('¿Cuál es mi saldo disponible y cómo lo puedo usar?')}>
+                    <span className="zt-ai-ic"><IonIcon icon={walletOutline} /></span>
+                    <span className="zt-ai-body">
+                      <span className="zt-ai-ttl">{primary.asset} disponible</span>
+                      <span className="zt-ai-sub">{formatAmount(primary.available)} {primary.asset}</span>
+                    </span>
+                    <IonIcon className="zt-ai-go" icon={chevronForward} />
+                  </button>
+                )}
+
+                {recent.length > 0 && (
+                  <button className="zt-ai-card" onClick={() => send('Resume mis últimas transacciones completadas.')}>
+                    <span className="zt-ai-ic"><IonIcon icon={swapHorizontalOutline} /></span>
+                    <span className="zt-ai-body">
+                      <span className="zt-ai-ttl">Últimas transacciones</span>
+                      <span className="zt-ai-sub">
+                        {recent.map((p) => `${paymentTypeLabel(p.type)} ${formatAmount(p.amount)}`).join(' · ')}
+                      </span>
+                    </span>
+                    <IonIcon className="zt-ai-go" icon={chevronForward} />
+                  </button>
+                )}
+
+                {recent.length > 0 && (
+                  <div className="zt-ai-mini">
+                    {recent.map((p) => (
+                      <div className="zt-ai-mini-row" key={p.id}>
+                        <span>{paymentTypeLabel(p.type)}</span>
+                        <span className="zt-ai-mini-meta">{formatAmount(p.amount)} {p.asset} · {formatDate(p.createdAt)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="zt-chat-hint">O pregúntame sobre tu cuenta, transferencias, P2P o KYC.</p>
               </div>
             )}
             {msgs.map((m, i) => (
@@ -110,14 +163,19 @@ export default function SupportChat() {
           </div>
         </IonContent>
         <IonFooter className="zt-chat-footer">
+          <div className="zt-chat-chips">
+            {QUICK.map((q) => (
+              <button key={q} className="zt-chat-chip" onClick={() => send(q)} disabled={busy}>{q}</button>
+            ))}
+          </div>
           <div className="zt-chat-input">
             <IonInput
               value={text}
-              placeholder="Pregúntame sobre tu cuenta, P2P…"
+              placeholder="Pregunta al asistente de Zentto…"
               onIonInput={(e) => setText(e.detail.value ?? '')}
               onKeyDown={(e) => e.key === 'Enter' && send()}
             />
-            <button className="zt-chat-send" onClick={send} disabled={busy || !text.trim()}>
+            <button className="zt-chat-send" onClick={() => send()} disabled={busy || !text.trim()}>
               {busy ? <IonSpinner name="dots" /> : <IonIcon icon={sendOutline} />}
             </button>
           </div>
