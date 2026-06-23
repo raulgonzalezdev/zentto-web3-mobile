@@ -1326,3 +1326,34 @@ strong {
   color: var(--zt-text-dim);
   margin: 14px 4px 6px;
 }
+
+/* ════════ Soporte AI flotante (FAB + chat estilo Telegram) ════════ */
+.zt-support-fab { position: fixed; right: 16px; bottom: calc(72px + env(safe-area-inset-bottom)); z-index: 50; width: 52px; height: 52px; border-radius: 999px; border: none; background: var(--ion-color-primary); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45); cursor: pointer; }
+.zt-support-fab ion-icon { font-size: 26px; }
+.zt-support-bar { --background: var(--ion-color-primary); --color: #fff; }
+.zt-support-ava { width: 34px; height: 34px; margin-left: 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; }
+.zt-support-ava ion-icon { color: #fff; font-size: 18px; }
+.zt-support-ttl { font-size: 15px; font-weight: 800; color: #fff; }
+.zt-support-sub { font-size: 11px; color: #c7d2fe; font-weight: 600; }
+.zt-support-bar ion-button { --color: #fff; }
+
+.zt-chat-body { padding: 14px; display: flex; flex-direction: column; gap: 8px; height: 100%; overflow-y: auto; }
+.zt-chat-empty { text-align: center; color: var(--zt-text-dim); margin: auto 0; font-size: 14px; line-height: 1.6; }
+.zt-bubble { max-width: 82%; padding: 10px 12px; border-radius: 14px; font-size: 14px; line-height: 1.5; word-break: break-word; }
+.zt-bubble.user { align-self: flex-end; background: var(--ion-color-primary); color: #fff; border-bottom-right-radius: 4px; }
+.zt-bubble.assistant { align-self: flex-start; background: var(--zt-card-2); color: var(--zt-text); border-bottom-left-radius: 4px; }
+.zt-bubble-txt { white-space: pre-wrap; }
+.zt-bubble-src { margin-top: 8px; display: flex; flex-direction: column; gap: 3px; }
+.zt-bubble-src a { font-size: 11px; color: var(--zt-cyan, var(--ion-color-primary)); }
+.zt-bubble.user .zt-bubble-src a { color: #e0e7ff; }
+.zt-typing { display: flex; gap: 4px; padding: 4px 2px; }
+.zt-typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--zt-text-dim); animation: zt-blink 1.2s infinite both; }
+.zt-typing span:nth-child(2) { animation-delay: 0.2s; }
+.zt-typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes zt-blink { 0%, 80%, 100% { opacity: 0.3; } 40% { opacity: 1; } }
+
+.zt-chat-input { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--zt-border); background: var(--zt-card); }
+.zt-chat-input ion-input { --background: var(--zt-card-2); --padding-start: 12px; --padding-end: 12px; --border-radius: 999px; border-radius: 999px; flex: 1; min-height: 42px; }
+.zt-chat-send { width: 42px; height: 42px; flex-shrink: 0; border: none; border-radius: 999px; background: var(--ion-color-primary); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.zt-chat-send:disabled { opacity: 0.5; }
+.zt-chat-foot { text-align: center; font-size: 11px; color: var(--zt-text-dim); padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); background: var(--zt-card); }

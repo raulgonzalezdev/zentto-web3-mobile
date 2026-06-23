@@ -20,6 +20,7 @@ import {
 
 import SettingsMenu from './components/SettingsMenu';
 import LockScreen from './components/LockScreen';
+import SupportChat from './components/SupportChat';
 import { useAuth } from './auth/AuthContext';
 import { useIncomingNotifications } from './hooks/useIncomingNotifications';
 import { useLock } from './auth/LockContext';
@@ -162,6 +163,9 @@ export default function App() {
             </IonTabButton>
           </IonTabBar>
         </IonTabs>
+
+        {/* Soporte AI flotante (global, no desplaza las operaciones) */}
+        <SupportChat />
       </IonReactRouter>
     </IonApp>
   );
