@@ -1360,3 +1360,36 @@ ion-input, ion-textarea, ion-searchbar { --placeholder-color: var(--zt-text-dim)
 .zt-chat-send { width: 42px; height: 42px; flex-shrink: 0; border: none; border-radius: 999px; background: var(--ion-color-primary); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .zt-chat-send:disabled { opacity: 0.5; }
 .zt-chat-foot { text-align: center; font-size: 11px; color: var(--zt-text-dim); padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); background: var(--zt-card); }
+
+/* ════════ Campos de formulario en tarjetas — sin fondo gris (no parezca lleno) ════════ */
+ion-item.zt-card { --background: transparent; --inner-padding-end: 0; --highlight-height: 0; --min-height: 0; }
+.zt-card ion-input { --background: transparent; }
+ion-item.zt-card.item-has-focus,
+ion-item.zt-card.ion-focused { border-color: var(--zt-indigo); box-shadow: 0 0 0 1px var(--zt-indigo); }
+
+/* ════════ Carrusel de cuentas/productos (Home) ════════ */
+.zt-acct-wrap { margin-top: 16px; }
+.zt-acct-carousel { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 2px 2px; }
+.zt-acct-carousel::-webkit-scrollbar { display: none; }
+.zt-acct-card { flex: 0 0 87%; scroll-snap-align: center; border-radius: 20px; padding: 18px; min-height: 158px; box-sizing: border-box; }
+.zt-acct-card.zt-balance-card { margin: 0; }
+.zt-acct-card.zt-balance-card.alt { background: linear-gradient(135deg, #0e7490 0%, #155e75 55%, #0e1430 100%); }
+.zt-acct-soon { background: var(--zt-card); border: 1px dashed var(--zt-border); display: flex; flex-direction: column; gap: 5px; }
+.zt-soon-badge { align-self: flex-start; font-size: 11px; font-weight: 600; color: var(--zt-indigo); background: rgba(99, 102, 241, 0.13); padding: 3px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 4px; }
+.zt-soon-ic { font-size: 30px; color: var(--zt-indigo); margin-top: 8px; }
+.zt-soon-title { font-size: 17px; font-weight: 700; }
+.zt-soon-desc { font-size: 13px; color: var(--zt-text-dim); }
+.zt-acct-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+.zt-acct-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--zt-border); transition: all 0.2s; }
+.zt-acct-dot.on { width: 18px; background: var(--zt-indigo); }
+
+/* Acciones rápidas como barra propia (fuera de la tarjeta de saldo) */
+.zt-quick-bar { margin-top: 14px; background: var(--zt-card); border: 1px solid var(--zt-border); border-radius: 18px; padding: 14px 6px; }
+.zt-quick-bar .zt-quick-item { color: var(--zt-text); }
+.zt-quick-bar .zt-quick-ic { background: rgba(99, 102, 241, 0.13); color: var(--zt-indigo); }
+.zt-quick-bar .zt-quick-label { color: var(--zt-text-dim); }
+
+/* ════════ Tinte de marca sutil en el menú lateral ════════ */
+.zt-menu .zt-menu-profile { background: linear-gradient(135deg, rgba(99, 102, 241, 0.20), rgba(99, 102, 241, 0.04)); }
+.zt-menu-list ion-item ion-icon[slot='start'] { color: var(--zt-indigo); }
+.zt-menu-list ion-item.ion-activated { --background: rgba(99, 102, 241, 0.10); }

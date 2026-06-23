@@ -98,7 +98,7 @@ export default function LoginPage() {
                   value={password}
                   onIonInput={(e) => setPassword(e.detail.value ?? '')}
                   onKeyDown={(e) => e.key === 'Enter' && email && password && handleLogin()}
-                  placeholder="••••••••"
+                  placeholder="Tu contraseña"
                 >
                   <IonIcon
                     slot="end"

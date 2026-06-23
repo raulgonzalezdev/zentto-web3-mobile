@@ -6,6 +6,7 @@ import {
   IonRefresher,
   IonRefresherContent,
 } from '@ionic/react';
+import { useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import {
   paperPlaneOutline,
@@ -13,6 +14,10 @@ import {
   swapHorizontalOutline,
   addCircleOutline,
   walletOutline,
+  cardOutline,
+  trendingUpOutline,
+  cashOutline,
+  lockClosedOutline,
 } from 'ionicons/icons';
 import ZenttoHeader from '../components/ZenttoHeader';
 import { BalanceSkeleton, ListSkeleton } from '../components/Skeletons';
@@ -77,58 +82,36 @@ export default function HomePage() {
         </IonRefresher>
 
         <div className="zt-screen">
-          {/* Tarjeta de cuenta — saldo real del ledger */}
-          <div className="zt-balance-card zt-enter">
-            <span className="zt-chip-net">
-              <span className={`zt-dot${evmDown ? ' off' : ''}`} />
-              {netLabel}
-            </span>
-            <div className="zt-balance-label">
-              {primary ? `${primary.asset} disponible` : 'Saldo disponible'}
-            </div>
-            <div className="zt-balance-amount">
-              {loadingBalance ? (
-                <BalanceSkeleton />
-              ) : primary ? (
-                `${assetSymbol(primary.asset)}${formatAmount(animated)}`
-              ) : (
-                '₮0.00'
-              )}
-            </div>
-            <div className="zt-balance-sub">
-              {user?.displayName || user?.email || 'Mi cuenta'}
-            </div>
+          {/* Carrusel de cuentas/productos — saldo real + próximos productos */}
+          <AccountsCarousel
+            primary={primary}
+            others={others}
+            loadingBalance={loadingBalance}
+            animated={animated}
+            netLabel={netLabel}
+            evmDown={evmDown}
+            owner={user?.displayName || user?.email || 'Mi cuenta'}
+            onRecharge={() => go('/recharge')}
+          />
 
-            <div className="zt-quick">
-              <button className="zt-quick-item" type="button" onClick={() => go('/send')}>
-                <span className="zt-quick-ic">
-                  <IonIcon icon={paperPlaneOutline} />
-                </span>
-                <span className="zt-quick-label">Enviar</span>
-              </button>
-              <button className="zt-quick-item" type="button" onClick={() => go('/receive')}>
-                <span className="zt-quick-ic">
-                  <IonIcon icon={qrCodeOutline} />
-                </span>
-                <span className="zt-quick-label">Recibir</span>
-              </button>
-              <button className="zt-quick-item" type="button" onClick={() => go('/movements')}>
-                <span className="zt-quick-ic">
-                  <IonIcon icon={swapHorizontalOutline} />
-                </span>
-                <span className="zt-quick-label">Historial</span>
-              </button>
-              <button
-                className="zt-quick-item"
-                type="button"
-                onClick={() => go('/recharge')}
-              >
-                <span className="zt-quick-ic">
-                  <IonIcon icon={addCircleOutline} />
-                </span>
-                <span className="zt-quick-label">Recargar</span>
-              </button>
-            </div>
+          {/* Acciones rápidas (compartidas) */}
+          <div className="zt-quick zt-quick-bar">
+            <button className="zt-quick-item" type="button" onClick={() => go('/send')}>
+              <span className="zt-quick-ic"><IonIcon icon={paperPlaneOutline} /></span>
+              <span className="zt-quick-label">Enviar</span>
+            </button>
+            <button className="zt-quick-item" type="button" onClick={() => go('/receive')}>
+              <span className="zt-quick-ic"><IonIcon icon={qrCodeOutline} /></span>
+              <span className="zt-quick-label">Recibir</span>
+            </button>
+            <button className="zt-quick-item" type="button" onClick={() => go('/movements')}>
+              <span className="zt-quick-ic"><IonIcon icon={swapHorizontalOutline} /></span>
+              <span className="zt-quick-label">Historial</span>
+            </button>
+            <button className="zt-quick-item" type="button" onClick={() => go('/recharge')}>
+              <span className="zt-quick-ic"><IonIcon icon={addCircleOutline} /></span>
+              <span className="zt-quick-label">Recargar</span>
+            </button>
           </div>
 
           {/* Lista de activos del ledger */}
@@ -175,6 +158,117 @@ export default function HomePage() {
         </div>
       </IonContent>
     </IonPage>
+  );
+}
+
+interface CarouselProps {
+  primary?: AccountBalance;
+  others: AccountBalance[];
+  loadingBalance: boolean;
+  animated: number;
+  netLabel: string;
+  evmDown: boolean;
+  owner: string;
+  onRecharge: () => void;
+}
+
+const SOON_PRODUCTS = [
+  { key: 'card', title: 'Tarjeta Zentto', desc: 'Paga en cualquier comercio', icon: cardOutline },
+  { key: 'save', title: 'Ahorro en dólares', desc: 'Guarda y protege tu dinero', icon: cashOutline },
+  { key: 'yield', title: 'Rendimiento', desc: 'Haz crecer tu saldo', icon: trendingUpOutline },
+];
+
+/** Carrusel deslizable de cuentas (saldo real) + productos próximos, con dots. */
+function AccountsCarousel({
+  primary,
+  others,
+  loadingBalance,
+  animated,
+  netLabel,
+  evmDown,
+  owner,
+  onRecharge,
+}: CarouselProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+  const total = 1 + others.length + SOON_PRODUCTS.length;
+
+  const onScroll = () => {
+    const el = ref.current;
+    if (!el) return;
+    const cardW = el.scrollWidth / total;
+    setActive(Math.min(total - 1, Math.max(0, Math.round(el.scrollLeft / cardW))));
+  };
+
+  return (
+    <div className="zt-acct-wrap zt-enter">
+      <div className="zt-acct-carousel" ref={ref} onScroll={onScroll}>
+        {/* Saldo principal (real) */}
+        <div className="zt-acct-card zt-balance-card">
+          <span className="zt-chip-net">
+            <span className={`zt-dot${evmDown ? ' off' : ''}`} />
+            {netLabel}
+          </span>
+          <div className="zt-balance-label">
+            {primary ? `${primary.asset} disponible` : 'Saldo disponible'}
+          </div>
+          <div className="zt-balance-amount">
+            {loadingBalance ? (
+              <BalanceSkeleton />
+            ) : primary ? (
+              `${assetSymbol(primary.asset)}${formatAmount(animated)}`
+            ) : (
+              '₮0.00'
+            )}
+          </div>
+          <div className="zt-balance-sub">{owner}</div>
+          {!primary && !loadingBalance && (
+            <IonButton size="small" fill="outline" style={{ marginTop: 12 }} onClick={onRecharge}>
+              <IonIcon slot="start" icon={addCircleOutline} />
+              Recargar
+            </IonButton>
+          )}
+        </div>
+
+        {/* Otros activos (reales) */}
+        {others.map((b) => (
+          <div className="zt-acct-card zt-balance-card alt" key={b.asset}>
+            <span className="zt-chip-net">
+              <span className="zt-dot" />
+              {b.asset}
+            </span>
+            <div className="zt-balance-label">{b.asset} disponible</div>
+            <div className="zt-balance-amount">
+              {assetSymbol(b.asset)}
+              {formatAmount(b.available)}
+            </div>
+            <div className="zt-balance-sub">
+              {Number(b.held) > 0 ? `Retenido ${formatAmount(b.held)}` : 'Stablecoin'}
+            </div>
+          </div>
+        ))}
+
+        {/* Productos próximos */}
+        {SOON_PRODUCTS.map((p) => (
+          <div className="zt-acct-card zt-acct-soon" key={p.key}>
+            <span className="zt-soon-badge">
+              <IonIcon icon={lockClosedOutline} /> Próximamente
+            </span>
+            <div className="zt-soon-ic">
+              <IonIcon icon={p.icon} />
+            </div>
+            <div className="zt-soon-title">{p.title}</div>
+            <div className="zt-soon-desc">{p.desc}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="zt-acct-dots">
+        {Array.from({ length: total }).map((_, i) => (
+          <span key={i} className={`zt-acct-dot${i === active ? ' on' : ''}`} />
+        ))}
+      </div>
+    </div>
   );
 }
 
