@@ -49,42 +49,68 @@ async function reqBody(message: string) {
   });
 }
 
-export async function streamSupport(
+// Respuesta no-streaming: fallback robusto si el WebView no entrega el stream.
+async function fallbackSupport(
   message: string,
   onToken: (chunk: string) => void,
 ): Promise<{ sources?: { title: string; url: string }[] }> {
-  const res = await fetch(`${BASE}/api/support/chat/stream`, {
+  const res = await fetch(`${BASE}/api/support/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: await reqBody(message),
   });
-  if (!res.ok || !res.body) return { sources: [] };
-  const reader = res.body.getReader();
-  const dec = new TextDecoder();
-  let buf = '';
+  const d = await res.json().catch(() => ({} as any));
+  if (d.conversationId) await Preferences.set({ key: 'zt_support_conv', value: d.conversationId });
+  if (d.answer) onToken(d.answer);
+  return { sources: Array.isArray(d.sources) ? d.sources : undefined };
+}
+
+export async function streamSupport(
+  message: string,
+  onToken: (chunk: string) => void,
+): Promise<{ sources?: { title: string; url: string }[] }> {
+  let gotToken = false;
   let sources: { title: string; url: string }[] | undefined;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    const parts = buf.split('\n\n');
-    buf = parts.pop() || '';
-    for (const p of parts) {
-      const ev = /event: (.+)/.exec(p)?.[1];
-      const data = /data: (.+)/.exec(p)?.[1];
-      if (!data) continue;
-      try {
-        const j = JSON.parse(data);
-        if (ev === 'token' && j.text) onToken(j.text);
-        else if (ev === 'meta' && j.conversationId) await Preferences.set({ key: 'zt_support_conv', value: j.conversationId });
-        else if (ev === 'done') {
-          if (j.conversationId) await Preferences.set({ key: 'zt_support_conv', value: j.conversationId });
-          sources = Array.isArray(j.sources) ? j.sources : undefined;
+  try {
+    const res = await fetch(`${BASE}/api/support/chat/stream`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: await reqBody(message),
+    });
+    if (res.ok && res.body) {
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const parts = buf.split('\n\n');
+        buf = parts.pop() || '';
+        for (const p of parts) {
+          const ev = /event: (.+)/.exec(p)?.[1];
+          const data = /data: (.+)/.exec(p)?.[1];
+          if (!data) continue;
+          try {
+            const j = JSON.parse(data);
+            if (ev === 'token' && j.text) {
+              onToken(j.text);
+              gotToken = true;
+            } else if (ev === 'meta' && j.conversationId) {
+              await Preferences.set({ key: 'zt_support_conv', value: j.conversationId });
+            } else if (ev === 'done') {
+              if (j.conversationId) await Preferences.set({ key: 'zt_support_conv', value: j.conversationId });
+              sources = Array.isArray(j.sources) ? j.sources : undefined;
+            }
+          } catch {
+            /* línea parcial */
+          }
         }
-      } catch {
-        /* línea parcial */
       }
     }
+  } catch {
+    /* el stream falló → fallback */
   }
+  if (!gotToken) return fallbackSupport(message, onToken);
   return { sources };
 }

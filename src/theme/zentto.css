@@ -1327,8 +1327,15 @@ strong {
   margin: 14px 4px 6px;
 }
 
-/* Placeholder tenue (no parezca que el campo ya está lleno) */
-ion-input, ion-textarea, ion-searchbar { --placeholder-color: var(--zt-text-dim); --placeholder-opacity: 0.5; }
+/* Placeholder tenue (no parezca que el campo ya está lleno) + sin fondo gris interno */
+ion-input, ion-textarea, ion-searchbar { --placeholder-color: var(--zt-text-dim); --placeholder-opacity: 0.38; }
+ion-item ion-input, ion-item ion-textarea { --background: transparent; }
+/* Separar el valor/placeholder del label apilado/flotante */
+ion-input.input-label-placement-stacked, ion-input.input-label-placement-floating,
+ion-textarea.textarea-label-placement-stacked, ion-textarea.textarea-label-placement-floating { --padding-top: 8px; }
+/* Campos numéricos alineados a la derecha (excepto el del chat) */
+ion-input[type='number'], ion-input[inputmode='numeric'], ion-input[inputmode='decimal'] { text-align: right; }
+.zt-chat-input ion-input { text-align: left; }
 
 /* ════════ Soporte AI flotante (FAB + chat estilo Telegram) ════════ */
 .zt-support-fab { position: fixed; right: 16px; bottom: calc(72px + env(safe-area-inset-bottom)); z-index: 50; width: 52px; height: 52px; border-radius: 999px; border: none; background: var(--ion-color-primary); color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(99, 102, 241, 0.45); cursor: pointer; }
@@ -1382,6 +1389,10 @@ ion-input, ion-textarea, ion-searchbar { --placeholder-color: var(--zt-text-dim)
 .zt-chat-chips::-webkit-scrollbar { display: none; }
 .zt-chat-chip { flex-shrink: 0; border: 1px solid var(--zt-border); background: var(--zt-card-2); color: var(--zt-text); border-radius: 999px; padding: 7px 14px; font-size: 13px; cursor: pointer; white-space: nowrap; }
 .zt-chat-chip:active { background: rgba(99, 102, 241, 0.13); border-color: var(--zt-indigo); }
+
+/* Check "recordar usuario y clave" en login */
+.zt-remember { --background: transparent; --min-height: 0; --padding-start: 4px; --inner-padding-end: 0; margin-top: 8px; font-size: 13.5px; color: var(--zt-text-dim); }
+.zt-remember ion-checkbox { --size: 18px; --checkbox-background-checked: var(--zt-indigo); --border-color-checked: var(--zt-indigo); --border-radius: 5px; }
 .zt-chat-foot { text-align: center; font-size: 11px; color: var(--zt-text-dim); padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); background: var(--zt-card); }
 
 /* ════════ Campos de formulario en tarjetas — sin fondo gris (no parezca lleno) ════════ */

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   IonButton,
+  IonCheckbox,
   IonContent,
   IonIcon,
   IonInput,
@@ -27,9 +28,19 @@ export default function LoginPage() {
   const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [remember, setRemember] = useState(false);
 
   useEffect(() => {
-    Preferences.get({ key: 'zt_email' }).then(({ value }) => value && setEmail(value));
+    (async () => {
+      const r = (await Preferences.get({ key: 'zt_remember' })).value === '1';
+      setRemember(r);
+      const em = (await Preferences.get({ key: 'zt_email' })).value;
+      if (em) setEmail(em);
+      if (r) {
+        const pw = (await Preferences.get({ key: 'zt_pass' })).value;
+        if (pw) setPassword(pw);
+      }
+    })();
   }, []);
 
   async function handleLogin() {
@@ -39,6 +50,12 @@ export default function LoginPage() {
     try {
       const res = await login(email.trim(), password);
       await Preferences.set({ key: 'zt_email', value: email.trim() });
+      await Preferences.set({ key: 'zt_remember', value: remember ? '1' : '0' });
+      if (remember) {
+        await Preferences.set({ key: 'zt_pass', value: password });
+      } else {
+        await Preferences.remove({ key: 'zt_pass' });
+      }
       if (res.mfaRequired && res.mfaToken) {
         setMfaToken(res.mfaToken);
       } else if (res.user) {
@@ -109,6 +126,16 @@ export default function LoginPage() {
                 </IonInput>
               </IonItem>
 
+              <IonItem className="zt-remember" lines="none">
+                <IonCheckbox
+                  checked={remember}
+                  onIonChange={(e) => setRemember(e.detail.checked)}
+                  labelPlacement="end"
+                >
+                  Recordar usuario y clave
+                </IonCheckbox>
+              </IonItem>
+
               {error && (
                 <IonNote color="danger" style={{ display: 'block', margin: '12px 4px' }}>
                   {error}
@@ -141,7 +168,8 @@ export default function LoginPage() {
                   maxlength={6}
                   value={code}
                   onIonInput={(e) => setCode(e.detail.value ?? '')}
-                  placeholder="123456"
+                  onKeyDown={(e) => e.key === 'Enter' && code.length >= 6 && handle2fa()}
+                  placeholder="Código de 6 dígitos"
                 />
               </IonItem>
 
